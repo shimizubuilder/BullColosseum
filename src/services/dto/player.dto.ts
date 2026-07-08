@@ -52,3 +52,21 @@ export interface PlayerSavePayload {
   stored_bulls: StoredBullDto[]
   farm_claim: number
 }
+
+export interface PlayerBundleDto {
+  ok: boolean
+  returning?: boolean
+  player: PlayerDto
+  bull: BullDto | null
+}
+
+export interface SaveResponseDto {
+  ok: boolean
+  warning?: string
+}
+
+export interface MatchResponseDto {
+  ok: boolean
+  player: PlayerDto
+  rating_delta: number
+}
