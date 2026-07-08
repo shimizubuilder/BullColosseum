@@ -166,3 +166,12 @@ export const COMBAT_AI = {
   finalCommitBase: 0.1,
   finalCommitSkillScale: 0.85,
 }
+
+export const COMBAT_TIMING = {
+  introDuration: 1.15,
+  lockCursorSpeed: 1.1,
+  lockDelay: 0.6,
+  autoTapTimeout: 4.5,
+  throwDuration: 1.1,
+  finalCommitDelay: 0.9,
+}

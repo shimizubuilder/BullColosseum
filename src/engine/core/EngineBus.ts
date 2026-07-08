@@ -5,6 +5,7 @@ export interface EngineEventMap {
   'transition:end': { to: SceneId }
   'world:prompt': { text: string | null }
   'world:enter': { target: string }
+  'duel:end': { won: boolean }
 }
 
 type Handler<Payload> = (payload: Payload) => void

@@ -22,9 +22,11 @@ import { newLocalToken } from '@/services/offline/OfflineOracle'
 import {
   loadPlayer,
   registerPlayer,
+  reportMatch as reportMatchToServer,
   savePlayer,
   type MatchOutcome,
 } from '@/services/repositories/PlayerRepository'
+import type { MatchReward } from '@/domain/combat/matchReward'
 import { useSessionStore } from './useSessionStore'
 
 function isLocalToken(token: string): boolean {
@@ -83,6 +85,22 @@ export const usePlayerStore = defineStore('player', () => {
     player.value.activeBull.level = progressed.level
     player.value.activeBull.xp = progressed.xp
     session.setDataSource(outcome.source)
+  }
+
+  async function resolveMatch(won: boolean, reward: MatchReward, opponentName: string): Promise<number> {
+    if (!player.value) {
+      return 0
+    }
+    const outcome = await reportMatchToServer({
+      player: player.value,
+      won,
+      reward,
+      opponentName,
+      online: session.online,
+      rng: Math.random,
+    })
+    applyMatchResult(outcome, reward.xp)
+    return outcome.ratingDelta
   }
 
   function trainBull(): boolean {
@@ -284,6 +302,7 @@ export const usePlayerStore = defineStore('player', () => {
     resumeFromServer,
     save,
     applyMatchResult,
+    resolveMatch,
     trainBull,
     buyGear,
     convertVault,

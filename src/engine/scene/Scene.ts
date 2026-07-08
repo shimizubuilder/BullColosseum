@@ -6,6 +6,7 @@ import type { Camera } from '@/engine/core/Camera'
 import type { AssetRegistry } from '@/engine/assets/AssetRegistry'
 import type { RemoteActorData } from '@/engine/world/WorldActor'
 import type { PlotOwnership } from '@/engine/world/PlotSprite'
+import type { DuelSetup } from '@/engine/duel/DuelDirector'
 
 export interface PlayerIdentity {
   name: string
@@ -25,6 +26,7 @@ export interface SceneContext {
   assets: AssetRegistry
   playerIdentity: PlayerIdentity
   serverOffset: number
+  duelSetup: DuelSetup | null
 }
 
 export interface Scene {

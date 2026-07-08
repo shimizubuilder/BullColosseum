@@ -9,6 +9,7 @@ import type { PlayerIdentity, PlayerPosition, SceneContext } from './scene/Scene
 import type { SceneId } from './scene/SceneId'
 import type { RemoteActorData } from './world/WorldActor'
 import type { PlotOwnership } from './world/PlotSprite'
+import type { DuelSetup } from './duel/DuelDirector'
 
 export class Engine {
   readonly bus = new EngineBus()
@@ -29,6 +30,7 @@ export class Engine {
       assets: this.assets,
       playerIdentity: this.identity,
       serverOffset: 0,
+      duelSetup: null,
     }
     this.manager = new SceneManager(gameApp.pixi.stage, this.context, this.bus)
     gameApp.pixi.renderer.on('resize', this.handleResize)
@@ -81,6 +83,10 @@ export class Engine {
 
   setServerOffset(offsetMs: number): void {
     this.context.serverOffset = offsetMs
+  }
+
+  setDuelSetup(setup: DuelSetup): void {
+    this.context.duelSetup = setup
   }
 
   getPlayerPosition(): PlayerPosition | null {

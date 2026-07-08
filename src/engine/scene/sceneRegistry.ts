@@ -3,6 +3,7 @@ import type { Scene, SceneContext } from './Scene'
 import { BootScene } from './scenes/BootScene'
 import { LoginScene } from './scenes/LoginScene'
 import { IsoWorldScene, type AmbientNpc } from './scenes/IsoWorldScene'
+import { DuelScene } from './scenes/DuelScene'
 import { MAIN_MAP } from '@/domain/maps/mainMap'
 import { FARM_MAP } from '@/domain/maps/farmMap'
 
@@ -35,6 +36,7 @@ const REGISTRY: Partial<Record<SceneId, SceneFactory>> = {
       minimapTitle: 'FARM ISLAND',
       ambientNpcs: [],
     }),
+  duel: (context) => new DuelScene(context),
 }
 
 export function isSceneRegistered(id: SceneId): boolean {

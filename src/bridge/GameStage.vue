@@ -8,8 +8,13 @@ import { useWorldStore } from '@/stores/useWorldStore'
 import { usePresenceStore } from '@/stores/usePresenceStore'
 import { useSessionStore } from '@/stores/useSessionStore'
 import { useFarmStore } from '@/stores/useFarmStore'
+import { useDuelStore } from '@/stores/useDuelStore'
 import * as presenceApi from '@/services/api/presenceApi'
 import type { PlotOwnership } from '@/engine/world/PlotSprite'
+import type { DuelFighter } from '@/engine/duel/DuelDirector'
+import { createOpponent } from '@/domain/combat/matchmaking'
+import { rollMatchReward } from '@/domain/combat/matchReward'
+import { statsOf } from '@/domain/stats'
 
 const root = useTemplateRef<HTMLDivElement>('root')
 const scene = useSceneStore()
@@ -18,6 +23,7 @@ const world = useWorldStore()
 const presence = usePresenceStore()
 const session = useSessionStore()
 const farm = useFarmStore()
+const duel = useDuelStore()
 
 const HEARTBEAT_INTERVAL_MS = 1300
 
@@ -26,12 +32,14 @@ let disposed = false
 let stops: (() => void)[] = []
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null
 let heartbeatInFlight = false
+let pendingDuel: { opponentName: string; foeTier: number; myTier: number } | null = null
 
 const SCENE_MAP: Partial<Record<UiSceneId, EngineSceneId>> = {
   boot: 'boot',
   login: 'login',
   world: 'overworld',
   farm: 'farm',
+  duel: 'duel',
 }
 
 const OVERLAY_BUILDINGS: OverlayId[] = ['stable', 'shop', 'vault', 'leaderboard', 'quests']
@@ -53,9 +61,49 @@ function farmOwnerships(): PlotOwnership[] {
   }))
 }
 
+function startDuel(): void {
+  const account = player.player
+  if (!account || !engine) {
+    return
+  }
+  const opponent = createOpponent(account.activeBull.level, account.record.wins, Math.random)
+  const me: DuelFighter = {
+    name: account.account.username,
+    element: account.activeBull.element,
+    stats: player.stats ?? statsOf(account.activeBull),
+    skill: 0.75,
+  }
+  const foe: DuelFighter = {
+    name: opponent.name,
+    element: opponent.element,
+    stats: statsOf({ element: opponent.element, level: opponent.level, gear: [], traits: opponent.traits, mythic: opponent.mythic }),
+    skill: opponent.skill,
+  }
+  engine.setDuelSetup({ me, foe, spectate: false })
+  pendingDuel = { opponentName: opponent.name, foeTier: opponent.tier, myTier: player.tier }
+  duel.begin('ranked')
+  scene.goto('duel')
+}
+
+async function resolveDuel(won: boolean): Promise<void> {
+  if (!pendingDuel) {
+    scene.goto('world')
+    return
+  }
+  const reward = rollMatchReward(won, pendingDuel.foeTier, pendingDuel.myTier, Math.random)
+  const ratingDelta = await player.resolveMatch(won, reward, pendingDuel.opponentName)
+  duel.finish({ won, opponentName: pendingDuel.opponentName, reward, ratingDelta })
+  pendingDuel = null
+  scene.goto('world')
+}
+
 function handleEnter(target: string): void {
   if ((OVERLAY_BUILDINGS as string[]).includes(target)) {
     scene.openOverlay(target as OverlayId)
+    return
+  }
+  if (target === 'colosseum') {
+    startDuel()
     return
   }
   if (target.startsWith('plot:')) {
@@ -171,6 +219,7 @@ onMounted(async () => {
     }),
     engine.bus.on('world:prompt', ({ text }) => world.setPrompt(text)),
     engine.bus.on('world:enter', ({ target }) => handleEnter(target)),
+    engine.bus.on('duel:end', ({ won }) => void resolveDuel(won)),
     watch(
       () => scene.current,
       (id) => {

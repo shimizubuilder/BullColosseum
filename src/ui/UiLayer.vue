@@ -13,9 +13,11 @@ import ProfileScreen from './screens/ProfileScreen.vue'
 import QuestsScreen from './screens/QuestsScreen.vue'
 import GuideScreen from './screens/GuideScreen.vue'
 import KandangScreen from './screens/KandangScreen.vue'
+import ResultCard from './hud/ResultCard.vue'
 
 const scene = useSceneStore()
 const showLogin = computed(() => scene.current === 'boot' || scene.current === 'login')
+const showWorld = computed(() => scene.current === 'world' || scene.current === 'farm')
 
 const overlays = {
   stable: StableScreen,
@@ -35,12 +37,13 @@ const overlayComponent = computed(() =>
 <template>
   <div class="ui-layer">
     <LoginScreen v-if="showLogin" />
-    <template v-else>
+    <template v-else-if="showWorld">
       <WorldHud />
       <WorldPrompt />
       <ChatPanel />
       <component :is="overlayComponent" v-if="overlayComponent" />
     </template>
+    <ResultCard />
   </div>
 </template>
 
