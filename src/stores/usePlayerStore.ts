@@ -7,6 +7,7 @@ import { applyXp, tierOf, xpForNext } from '@/domain/progression'
 import { trainingCost, trainingXp, vaultConversion } from '@/domain/economy'
 import { findGear, type GearId } from '@/domain/config/gear'
 import type { RegisterInput } from '@/services/api/playerApi'
+import * as profileApi from '@/services/api/profileApi'
 import { newLocalToken } from '@/services/offline/OfflineOracle'
 import {
   loadPlayer,
@@ -115,6 +116,49 @@ export const usePlayerStore = defineStore('player', () => {
     return true
   }
 
+  function recordWallet(address: string): void {
+    if (!player.value) {
+      return
+    }
+    player.value.wallet = { address, status: 'unverified' }
+    if (isServerAccount.value) {
+      void profileApi.setWallet(player.value.account.token, address)
+    }
+  }
+
+  function markWalletLinked(address: string, nonce: string, signature: string): void {
+    if (!player.value) {
+      return
+    }
+    player.value.wallet = { address, status: 'linked' }
+    if (isServerAccount.value) {
+      void profileApi.verifyWallet(player.value.account.token, address, nonce, signature)
+    }
+  }
+
+  async function renameAccount(username: string): Promise<{ ok: boolean; error?: string }> {
+    if (!player.value || player.value.usernameChanged) {
+      return { ok: false, error: 'locked' }
+    }
+    const nextName = username.trim().slice(0, 16)
+    if (!nextName || nextName === player.value.account.username) {
+      return { ok: false, error: 'unchanged' }
+    }
+    if (isServerAccount.value) {
+      const result = await profileApi.rename(player.value.account.token, nextName)
+      if (result.status === 'ok' && result.data.ok && result.data.player) {
+        player.value.account.username = result.data.player.username
+        player.value.usernameChanged = true
+        return { ok: true }
+      }
+      const error = result.status === 'ok' && result.data.error === 'taken' ? 'taken' : 'failed'
+      return { ok: false, error }
+    }
+    player.value.account.username = nextName
+    player.value.usernameChanged = true
+    return { ok: true }
+  }
+
   function convertVault(fraction: number): number {
     if (!player.value) {
       return 0
@@ -145,5 +189,8 @@ export const usePlayerStore = defineStore('player', () => {
     trainBull,
     buyGear,
     convertVault,
+    recordWallet,
+    markWalletLinked,
+    renameAccount,
   }
 })

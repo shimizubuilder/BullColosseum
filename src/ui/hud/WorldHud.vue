@@ -11,10 +11,12 @@ const gold = computed(() => player.player?.currency.gold ?? 0)
 const chargeToken = computed(() => player.player?.currency.chargeToken ?? 0)
 const rating = computed(() => player.player?.record.rating ?? 0)
 
-const buildings: { id: OverlayId; label: string; icon: string }[] = [
+const docks: { id: OverlayId; label: string; icon: string }[] = [
   { id: 'stable', label: 'Stable', icon: '🐂' },
   { id: 'shop', label: 'Shop', icon: '🛒' },
   { id: 'vault', label: 'Vault', icon: '🏦' },
+  { id: 'leaderboard', label: 'Ranks', icon: '🏆' },
+  { id: 'profile', label: 'Profile', icon: '👤' },
 ]
 </script>
 
@@ -35,14 +37,14 @@ const buildings: { id: OverlayId; label: string; icon: string }[] = [
 
     <nav class="dock">
       <button
-        v-for="building in buildings"
-        :key="building.id"
+        v-for="dock in docks"
+        :key="dock.id"
         type="button"
         class="dock__btn"
-        @click="scene.openOverlay(building.id)"
+        @click="scene.openOverlay(dock.id)"
       >
-        <span class="dock__icon">{{ building.icon }}</span>
-        <small>{{ building.label }}</small>
+        <span class="dock__icon">{{ dock.icon }}</span>
+        <small>{{ dock.label }}</small>
       </button>
     </nav>
   </template>
