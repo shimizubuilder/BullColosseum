@@ -38,5 +38,18 @@ export const useSceneStore = defineStore('scene', () => {
     overlay.value = null
   }
 
-  return { current, previous, overlay, isTransitioning, goto, openOverlay, closeOverlay }
+  function setTransitioning(value: boolean): void {
+    isTransitioning.value = value
+  }
+
+  return {
+    current,
+    previous,
+    overlay,
+    isTransitioning,
+    goto,
+    openOverlay,
+    closeOverlay,
+    setTransitioning,
+  }
 })

@@ -1,41 +1,28 @@
-export const TILE_WIDTH = 64
-export const TILE_HEIGHT = 32
-export const CELL_SIZE = 32
-
-const PROJECTION_X = TILE_WIDTH / 2 / CELL_SIZE
-const PROJECTION_Y = PROJECTION_X / 2
+export const ISO = 0.62
 
 export interface Point {
   x: number
   y: number
 }
 
-export function worldToScreen(worldX: number, worldY: number): Point {
-  return {
-    x: (worldX - worldY) * PROJECTION_X,
-    y: (worldX + worldY) * PROJECTION_Y,
-  }
+export function worldToIso(worldX: number, worldY: number): Point {
+  return { x: (worldX - worldY) * ISO, y: (worldX + worldY) * 0.5 * ISO }
 }
 
-export function screenToWorld(screenX: number, screenY: number): Point {
-  const projectedSum = screenY / PROJECTION_Y
-  const projectedDifference = screenX / PROJECTION_X
-  return {
-    x: (projectedSum + projectedDifference) / 2,
-    y: (projectedSum - projectedDifference) / 2,
-  }
+export function isoToWorld(isoX: number, isoY: number): Point {
+  return { x: (2 * isoY + isoX) / (2 * ISO), y: (2 * isoY - isoX) / (2 * ISO) }
 }
 
-export function worldToTile(worldX: number, worldY: number): Point {
-  return {
-    x: Math.floor(worldX / CELL_SIZE),
-    y: Math.floor(worldY / CELL_SIZE),
-  }
+export interface IsoBounds {
+  minX: number
+  maxX: number
+  minY: number
+  maxY: number
 }
 
-export function tileToWorld(tileX: number, tileY: number): Point {
-  return {
-    x: tileX * CELL_SIZE + CELL_SIZE / 2,
-    y: tileY * CELL_SIZE + CELL_SIZE / 2,
-  }
+export function isoBounds(width: number, height: number): IsoBounds {
+  const corners = [worldToIso(0, 0), worldToIso(width, 0), worldToIso(0, height), worldToIso(width, height)]
+  const xs = corners.map((corner) => corner.x)
+  const ys = corners.map((corner) => corner.y)
+  return { minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys) }
 }

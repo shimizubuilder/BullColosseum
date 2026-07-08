@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useSceneStore } from '@/stores/useSceneStore'
 import LoginScreen from './screens/LoginScreen.vue'
 import WorldHud from './hud/WorldHud.vue'
+import WorldPrompt from './hud/WorldPrompt.vue'
 import StableScreen from './screens/StableScreen.vue'
 import ShopScreen from './screens/ShopScreen.vue'
 import VaultScreen from './screens/VaultScreen.vue'
@@ -33,6 +34,7 @@ const overlayComponent = computed(() =>
     <LoginScreen v-if="showLogin" />
     <template v-else>
       <WorldHud />
+      <WorldPrompt />
       <component :is="overlayComponent" v-if="overlayComponent" />
     </template>
   </div>

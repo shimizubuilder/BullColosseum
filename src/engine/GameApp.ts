@@ -1,4 +1,4 @@
-import { Application } from 'pixi.js'
+import { Application, TextureSource } from 'pixi.js'
 
 export interface GameAppOptions {
   backgroundColor?: number
@@ -13,6 +13,7 @@ export class GameApp {
   }
 
   static async create(options: GameAppOptions = {}): Promise<GameApp> {
+    TextureSource.defaultOptions.scaleMode = 'nearest'
     const pixi = new Application()
     await pixi.init({
       backgroundColor: options.backgroundColor ?? 0x0f1216,
