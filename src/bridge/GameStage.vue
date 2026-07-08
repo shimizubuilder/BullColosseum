@@ -150,11 +150,12 @@ async function startSpectate(): Promise<void> {
     tier: entry.tier,
   }))
   spectate.begin(entries)
-  quest.progress('spectate', 1)
   const setup = spectateSetup()
   if (!setup || !engine) {
+    spectate.exit()
     return
   }
+  quest.progress('spectate', 1)
   engine.setDuelSetup(setup)
   duel.begin('spectate')
   scene.goto('duel')
@@ -249,7 +250,7 @@ function handleEnter(target: string): void {
   }
   if (target.startsWith('plot:')) {
     farm.selectPlot(Number(target.slice(5)))
-    scene.openOverlay('kandang')
+    scene.openOverlay('pen')
     return
   }
   if (target === 'portal:farm') {

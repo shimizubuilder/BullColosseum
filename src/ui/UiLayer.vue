@@ -15,7 +15,7 @@ import LeaderboardScreen from './screens/LeaderboardScreen.vue'
 import ProfileScreen from './screens/ProfileScreen.vue'
 import QuestsScreen from './screens/QuestsScreen.vue'
 import GuideScreen from './screens/GuideScreen.vue'
-import KandangScreen from './screens/KandangScreen.vue'
+import PenScreen from './screens/PenScreen.vue'
 import ArenaLobbyScreen from './screens/ArenaLobbyScreen.vue'
 import KingScreen from './screens/KingScreen.vue'
 import TournamentScreen from './screens/TournamentScreen.vue'
@@ -36,7 +36,7 @@ const overlays = {
   profile: ProfileScreen,
   quests: QuestsScreen,
   guide: GuideScreen,
-  kandang: KandangScreen,
+  pen: PenScreen,
   colosseum: ArenaLobbyScreen,
   king: KingScreen,
   tournament: TournamentScreen,

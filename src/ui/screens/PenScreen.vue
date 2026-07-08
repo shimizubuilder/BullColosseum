@@ -2,12 +2,14 @@
 import { computed, ref } from 'vue'
 import { usePlayerStore } from '@/stores/usePlayerStore'
 import { useFarmStore } from '@/stores/useFarmStore'
+import { useQuestStore } from '@/stores/useQuestStore'
 import { calfCost, farmRatePerHour, plotPrice } from '@/domain/economy'
 import { ELEMENTS } from '@/domain/config/elements'
 import OverlayShell from '@/ui/components/OverlayShell.vue'
 
 const player = usePlayerStore()
 const farm = useFarmStore()
+const quest = useQuestStore()
 
 const plotIndex = computed(() => farm.selectedPlot)
 const info = computed(() => (plotIndex.value != null ? farm.farmsByPlot[plotIndex.value] : undefined))
@@ -51,6 +53,9 @@ async function buy(): Promise<void> {
 
 async function collect(): Promise<void> {
   const earned = player.collectFarm()
+  if (earned > 0) {
+    quest.progress('collect', 1)
+  }
   message.value = earned > 0 ? `Collected ${earned} ◈.` : 'Nothing to collect yet.'
   await refresh()
 }
@@ -62,13 +67,16 @@ async function buyCalf(): Promise<void> {
 
 async function breed(): Promise<void> {
   const calf = player.breed(firstParent.value, secondParent.value)
+  if (calf) {
+    quest.progress('breed', 1)
+  }
   message.value = calf ? `Bred a ${calf.mythic ? 'MYTHIC ' : ''}calf with ${calf.traits.length} trait(s).` : 'Cannot breed (pick two bulls, need room and gold).'
   await refresh()
 }
 </script>
 
 <template>
-  <OverlayShell title="Pen (Kandang)" :subtitle="plotIndex != null ? `Plot #${plotIndex + 1}` : ''">
+  <OverlayShell title="Bull Pen" :subtitle="plotIndex != null ? `Plot #${plotIndex + 1}` : ''">
     <div class="pen">
       <div v-if="isEmpty && ownPlot === null" class="pen__buy">
         <p>An empty pen. Buy it to rest and breed bulls that earn passive gold.</p>

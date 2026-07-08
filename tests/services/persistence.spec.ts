@@ -76,6 +76,15 @@ describe('legacy v2 migration', () => {
     expect(storage.getItem('chargearena_v3')).toBeTruthy()
     expect(loadSave(storage)?.player?.account.username).toBe('Ansem')
   })
+
+  it('fills starter defaults for a minimal v2 blob', () => {
+    const storage = fakeStorage({ chargearena_v2: JSON.stringify({ username: 'Bare', bull: { elem: 'fire', lv: 1 } }) })
+    const loaded = loadSave(storage)
+    expect(loaded?.player?.currency.gold).toBe(60)
+    expect(loaded?.player?.record.rating).toBe(1000)
+    expect(loaded?.player?.farm).toEqual({ plotIndex: null, capacity: 2, lastClaimAt: 0 })
+    expect(loaded?.player?.wallet.status).toBe('none')
+  })
 })
 
 describe('browserStorage', () => {

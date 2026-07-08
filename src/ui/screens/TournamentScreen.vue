@@ -19,12 +19,16 @@ const gold = computed(() => player.player?.currency.gold ?? 0)
 const canJoin = computed(
   () => !tournament.playerIn && !tournament.running && !tournament.finished && gold.value >= entryCost.value,
 )
+const bracketLocked = computed(() => (tournament.playerIn && !tournament.finished) || tournament.running)
 
 function entries() {
   return leaderboard.entries.map((entry) => ({ username: entry.username, rating: entry.rating }))
 }
 
 async function selectMode(mode: TournamentMode): Promise<void> {
+  if (bracketLocked.value) {
+    return
+  }
   if (leaderboard.entries.length === 0) {
     await leaderboard.load()
   }
@@ -68,6 +72,7 @@ onMounted(() => {
           type="button"
           class="tn__mode"
           :class="{ 'is-active': tournament.mode === key }"
+          :disabled="bracketLocked"
           @click="selectMode(key)"
         >
           {{ TOURNAMENT.modes[key].label }}
@@ -110,7 +115,7 @@ onMounted(() => {
         >
           ▶ Start
         </button>
-        <button type="button" class="tn__btn" @click="selectMode(tournament.mode)">↻ New</button>
+        <button type="button" class="tn__btn" :disabled="bracketLocked" @click="selectMode(tournament.mode)">↻ New</button>
       </div>
     </div>
   </OverlayShell>
@@ -144,6 +149,11 @@ onMounted(() => {
   border-color: var(--color-accent);
   background: rgba(229, 72, 77, 0.14);
   color: var(--color-text);
+}
+
+.tn__mode:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .tn__bar {

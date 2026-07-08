@@ -12,7 +12,7 @@ export type OverlayId =
   | 'quests'
   | 'guide'
   | 'tournament'
-  | 'kandang'
+  | 'pen'
   | 'king'
   | 'colosseum'
 
