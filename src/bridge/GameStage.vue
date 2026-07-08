@@ -8,12 +8,15 @@ import { useWorldStore } from '@/stores/useWorldStore'
 import { usePresenceStore } from '@/stores/usePresenceStore'
 import { useSessionStore } from '@/stores/useSessionStore'
 import { useFarmStore } from '@/stores/useFarmStore'
-import { useDuelStore } from '@/stores/useDuelStore'
+import { useDuelStore, type DuelIntent } from '@/stores/useDuelStore'
+import { useKingStore } from '@/stores/useKingStore'
 import * as presenceApi from '@/services/api/presenceApi'
 import type { PlotOwnership } from '@/engine/world/PlotSprite'
 import type { DuelFighter } from '@/engine/duel/DuelDirector'
 import { createOpponent } from '@/domain/combat/matchmaking'
 import { rollMatchReward } from '@/domain/combat/matchReward'
+import { kingChallengerSkill, kingChallengerStats, type KingBull } from '@/domain/combat/king'
+import { KING } from '@/domain/config/balance'
 import { statsOf } from '@/domain/stats'
 
 const root = useTemplateRef<HTMLDivElement>('root')
@@ -24,6 +27,7 @@ const presence = usePresenceStore()
 const session = useSessionStore()
 const farm = useFarmStore()
 const duel = useDuelStore()
+const king = useKingStore()
 
 const HEARTBEAT_INTERVAL_MS = 1300
 
@@ -32,7 +36,7 @@ let disposed = false
 let stops: (() => void)[] = []
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null
 let heartbeatInFlight = false
-let pendingDuel: { opponentName: string; foeTier: number; myTier: number } | null = null
+let pendingDuel: { kind: DuelIntent; opponentName: string; foeTier: number; myTier: number } | null = null
 
 const SCENE_MAP: Partial<Record<UiSceneId, EngineSceneId>> = {
   boot: 'boot',
@@ -61,39 +65,111 @@ function farmOwnerships(): PlotOwnership[] {
   }))
 }
 
-function startDuel(): void {
+function meFighter(): DuelFighter {
+  const account = player.player
+  return {
+    name: account?.account.username ?? 'You',
+    element: account?.activeBull.element ?? 'fire',
+    stats: player.stats ?? (account ? statsOf(account.activeBull) : statsOf({ element: 'fire', level: 1 })),
+    skill: 0.75,
+  }
+}
+
+function startRankedDuel(): void {
   const account = player.player
   if (!account || !engine) {
     return
   }
   const opponent = createOpponent(account.activeBull.level, account.record.wins, Math.random)
-  const me: DuelFighter = {
-    name: account.account.username,
-    element: account.activeBull.element,
-    stats: player.stats ?? statsOf(account.activeBull),
-    skill: 0.75,
-  }
   const foe: DuelFighter = {
     name: opponent.name,
     element: opponent.element,
     stats: statsOf({ element: opponent.element, level: opponent.level, gear: [], traits: opponent.traits, mythic: opponent.mythic }),
     skill: opponent.skill,
   }
-  engine.setDuelSetup({ me, foe, spectate: false })
-  pendingDuel = { opponentName: opponent.name, foeTier: opponent.tier, myTier: player.tier }
+  engine.setDuelSetup({ me: meFighter(), foe, spectate: false })
+  pendingDuel = { kind: 'ranked', opponentName: opponent.name, foeTier: opponent.tier, myTier: player.tier }
   duel.begin('ranked')
   scene.goto('duel')
 }
 
+function startKingDuel(): void {
+  const account = player.player
+  if (!account || !engine) {
+    return
+  }
+  const state = king.state
+  const tier = state?.tier ?? KING.defaultChallengeTier
+  const bull: KingBull = state?.bull ?? {
+    element: 'shadow',
+    level: KING.defaultChallengeLevel,
+    traits: [],
+    mythic: false,
+  }
+  const foe: DuelFighter = {
+    name: state?.username ?? 'King',
+    element: bull.element,
+    stats: kingChallengerStats(bull, tier),
+    skill: kingChallengerSkill(tier),
+  }
+  engine.setDuelSetup({ me: meFighter(), foe, spectate: false })
+  pendingDuel = { kind: 'king', opponentName: foe.name, foeTier: tier, myTier: player.tier }
+  duel.begin('king')
+  scene.goto('duel')
+}
+
+function runIntent(kind: DuelIntent): void {
+  if (kind === 'ranked') {
+    startRankedDuel()
+  } else if (kind === 'king') {
+    startKingDuel()
+  }
+}
+
+async function resolveRankedDuel(won: boolean, foeTier: number, myTier: number, opponentName: string): Promise<void> {
+  const reward = rollMatchReward(won, foeTier, myTier, Math.random)
+  const ratingDelta = await player.resolveMatch(won, reward, opponentName)
+  duel.finish({ won, opponentName, reward, ratingDelta })
+}
+
+async function resolveKingDuel(won: boolean, tier: number): Promise<void> {
+  const account = player.player
+  if (won && account) {
+    const bull: KingBull = {
+      element: account.activeBull.element,
+      level: account.activeBull.level,
+      traits: account.activeBull.traits,
+      mythic: account.activeBull.mythic,
+    }
+    if (!player.isServerAccount) {
+      player.grantReward(KING.becomeKingGoldReward, 0)
+    }
+    await king.becomeKing({
+      useServer: player.isServerAccount,
+      token: account.account.token,
+      tier,
+      bull,
+      username: account.account.username,
+      avatar: account.account.avatar,
+    })
+    void player.save()
+  }
+  scene.goto('world')
+  scene.openOverlay('king')
+}
+
 async function resolveDuel(won: boolean): Promise<void> {
-  if (!pendingDuel) {
+  const current = pendingDuel
+  pendingDuel = null
+  if (!current) {
     scene.goto('world')
     return
   }
-  const reward = rollMatchReward(won, pendingDuel.foeTier, pendingDuel.myTier, Math.random)
-  const ratingDelta = await player.resolveMatch(won, reward, pendingDuel.opponentName)
-  duel.finish({ won, opponentName: pendingDuel.opponentName, reward, ratingDelta })
-  pendingDuel = null
+  if (current.kind === 'king') {
+    await resolveKingDuel(won, current.myTier)
+    return
+  }
+  await resolveRankedDuel(won, current.foeTier, current.myTier, current.opponentName)
   scene.goto('world')
 }
 
@@ -103,7 +179,7 @@ function handleEnter(target: string): void {
     return
   }
   if (target === 'colosseum') {
-    startDuel()
+    scene.openOverlay('colosseum')
     return
   }
   if (target.startsWith('plot:')) {
@@ -221,6 +297,15 @@ onMounted(async () => {
     engine.bus.on('world:enter', ({ target }) => handleEnter(target)),
     engine.bus.on('duel:end', ({ won }) => void resolveDuel(won)),
     watch(
+      () => duel.intent,
+      (value) => {
+        if (value) {
+          duel.consumeIntent()
+          runIntent(value)
+        }
+      },
+    ),
+    watch(
       () => scene.current,
       (id) => {
         const target = toEngineScene(id)
@@ -231,6 +316,9 @@ onMounted(async () => {
           startHeartbeat()
         } else {
           stopHeartbeat()
+        }
+        if (id === 'world') {
+          void king.refresh(identity().name)
         }
         if (id === 'farm') {
           void farm.load()

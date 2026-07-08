@@ -13,6 +13,8 @@ import ProfileScreen from './screens/ProfileScreen.vue'
 import QuestsScreen from './screens/QuestsScreen.vue'
 import GuideScreen from './screens/GuideScreen.vue'
 import KandangScreen from './screens/KandangScreen.vue'
+import ArenaLobbyScreen from './screens/ArenaLobbyScreen.vue'
+import KingScreen from './screens/KingScreen.vue'
 import ResultCard from './hud/ResultCard.vue'
 
 const scene = useSceneStore()
@@ -28,6 +30,8 @@ const overlays = {
   quests: QuestsScreen,
   guide: GuideScreen,
   kandang: KandangScreen,
+  colosseum: ArenaLobbyScreen,
+  king: KingScreen,
 }
 const overlayComponent = computed(() =>
   scene.overlay ? (overlays[scene.overlay as keyof typeof overlays] ?? null) : null,

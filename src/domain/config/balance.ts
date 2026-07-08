@@ -111,7 +111,20 @@ export const TOURNAMENT = {
   },
 }
 
-export const KING = { bountyPerMinute: 5, bountyCap: 1000, becomeKingGoldReward: 50 }
+export const KING = {
+  bountyPerMinute: 5,
+  bountyCap: 1000,
+  becomeKingGoldReward: 50,
+  challengerSkillBase: 0.6,
+  challengerSkillPerTier: 0.06,
+  challengerSkillMin: 0.55,
+  challengerSkillMax: 0.95,
+  defaultChallengeTier: 3,
+  defaultChallengeLevel: 14,
+  botHoldSeconds: 3600,
+  botTier: 4,
+  botLevel: 16,
+}
 
 export const COMBAT_LOCK = {
   perfect: { errorFactor: 0.4, advance: 0.14 },

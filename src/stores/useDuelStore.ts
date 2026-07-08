@@ -2,7 +2,8 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { MatchReward } from '@/domain/combat/matchReward'
 
-export type DuelContext = 'ranked' | 'practice'
+export type DuelContext = 'ranked' | 'king' | 'spectate' | 'practice'
+export type DuelIntent = 'ranked' | 'king' | 'spectate'
 
 export interface DuelResult {
   won: boolean
@@ -15,6 +16,17 @@ export const useDuelStore = defineStore('duel', () => {
   const active = ref(false)
   const context = ref<DuelContext>('ranked')
   const result = ref<DuelResult | null>(null)
+  const intent = ref<DuelIntent | null>(null)
+
+  function request(kind: DuelIntent): void {
+    intent.value = kind
+  }
+
+  function consumeIntent(): DuelIntent | null {
+    const value = intent.value
+    intent.value = null
+    return value
+  }
 
   function begin(nextContext: DuelContext): void {
     active.value = true
@@ -31,5 +43,5 @@ export const useDuelStore = defineStore('duel', () => {
     result.value = null
   }
 
-  return { active, context, result, begin, finish, clearResult }
+  return { active, context, result, intent, request, consumeIntent, begin, finish, clearResult }
 })

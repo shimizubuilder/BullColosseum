@@ -3,10 +3,12 @@ import { computed } from 'vue'
 import { usePlayerStore } from '@/stores/usePlayerStore'
 import { useSceneStore, type OverlayId } from '@/stores/useSceneStore'
 import { usePresenceStore } from '@/stores/usePresenceStore'
+import { useKingStore } from '@/stores/useKingStore'
 
 const player = usePlayerStore()
 const scene = useSceneStore()
 const presence = usePresenceStore()
+const king = useKingStore()
 
 const username = computed(() => player.player?.account.username ?? '')
 const gold = computed(() => player.player?.currency.gold ?? 0)
@@ -37,6 +39,7 @@ const docks: { id: OverlayId; label: string; icon: string }[] = [
         <span class="badge" :style="{ color: player.division.color }">
           {{ player.division.icon }} {{ player.division.name }}
         </span>
+        <span v-if="king.state" class="badge badge--king">👑 {{ king.state.username }}</span>
       </div>
     </header>
 
@@ -101,6 +104,10 @@ const docks: { id: OverlayId; label: string; icon: string }[] = [
 
 .badge--token {
   color: var(--color-accent);
+}
+
+.badge--king {
+  color: #ffcf4a;
 }
 
 .dock {
