@@ -16,7 +16,9 @@ const docks: { id: OverlayId; label: string; icon: string }[] = [
   { id: 'shop', label: 'Shop', icon: '🛒' },
   { id: 'vault', label: 'Vault', icon: '🏦' },
   { id: 'leaderboard', label: 'Ranks', icon: '🏆' },
+  { id: 'quests', label: 'Quests', icon: '📋' },
   { id: 'profile', label: 'Profile', icon: '👤' },
+  { id: 'guide', label: 'Guide', icon: '📖' },
 ]
 </script>
 

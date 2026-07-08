@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import type { Player } from '@/domain/models/player'
+import type { Quest } from '@/domain/quests'
 
 const bullSchema = z.object({
   name: z.string(),
@@ -22,9 +23,25 @@ const playerSchema = z.object({
   farm: z.object({ plotIndex: z.number().nullable(), capacity: z.number(), lastClaimAt: z.number() }),
 })
 
+const questSchema = z.object({
+  id: z.string(),
+  type: z.enum(['win', 'breed', 'collect', 'bet', 'spectate']),
+  target: z.number(),
+  descriptionTemplate: z.string(),
+  reward: z.object({ gold: z.number(), token: z.number().optional() }),
+  progress: z.number(),
+  claimed: z.boolean(),
+})
+
+const questsSchema = z.object({
+  resetDate: z.string(),
+  dailyList: z.array(questSchema),
+})
+
 const persistedStateSchema = z.object({
   player: playerSchema.nullable(),
   tutorialDone: z.boolean(),
+  quests: questsSchema.optional(),
 })
 
 export const CURRENT_SCHEMA_VERSION = 3
@@ -34,7 +51,13 @@ export const saveEnvelopeSchema = z.object({
   data: persistedStateSchema,
 })
 
+export interface PersistedQuests {
+  resetDate: string
+  dailyList: Quest[]
+}
+
 export interface PersistedState {
   player: Player | null
   tutorialDone: boolean
+  quests?: PersistedQuests
 }

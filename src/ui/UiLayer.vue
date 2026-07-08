@@ -8,6 +8,8 @@ import ShopScreen from './screens/ShopScreen.vue'
 import VaultScreen from './screens/VaultScreen.vue'
 import LeaderboardScreen from './screens/LeaderboardScreen.vue'
 import ProfileScreen from './screens/ProfileScreen.vue'
+import QuestsScreen from './screens/QuestsScreen.vue'
+import GuideScreen from './screens/GuideScreen.vue'
 
 const scene = useSceneStore()
 const showLogin = computed(() => scene.current === 'boot' || scene.current === 'login')
@@ -18,6 +20,8 @@ const overlays = {
   vault: VaultScreen,
   leaderboard: LeaderboardScreen,
   profile: ProfileScreen,
+  quests: QuestsScreen,
+  guide: GuideScreen,
 }
 const overlayComponent = computed(() =>
   scene.overlay ? (overlays[scene.overlay as keyof typeof overlays] ?? null) : null,

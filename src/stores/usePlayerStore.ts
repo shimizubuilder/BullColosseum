@@ -116,6 +116,14 @@ export const usePlayerStore = defineStore('player', () => {
     return true
   }
 
+  function grantReward(gold: number, token: number): void {
+    if (!player.value) {
+      return
+    }
+    player.value.currency.gold += gold
+    player.value.currency.chargeToken += token
+  }
+
   function recordWallet(address: string): void {
     if (!player.value) {
       return
@@ -189,6 +197,7 @@ export const usePlayerStore = defineStore('player', () => {
     trainBull,
     buyGear,
     convertVault,
+    grantReward,
     recordWallet,
     markWalletLinked,
     renameAccount,
