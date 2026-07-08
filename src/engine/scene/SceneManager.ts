@@ -4,7 +4,8 @@ import type { Scene, SceneContext } from './Scene'
 import type { EngineBus } from '@/engine/core/EngineBus'
 import { canTransition } from './transitionTable'
 import { createScene, isSceneRegistered } from './sceneRegistry'
-import type { PlayerIdentity } from './Scene'
+import type { PlayerIdentity, PlayerPosition } from './Scene'
+import type { RemoteActorData } from '@/engine/world/WorldActor'
 
 const COVER_MS = 300
 const REVEAL_MS = 260
@@ -92,6 +93,18 @@ export class SceneManager {
   setPlayerIdentity(identity: PlayerIdentity): void {
     this.active?.setPlayerIdentity?.(identity)
     this.pending?.next.setPlayerIdentity?.(identity)
+  }
+
+  setRemoteActors(actors: RemoteActorData[]): void {
+    this.active?.setRemoteActors?.(actors)
+  }
+
+  getPlayerPosition(): PlayerPosition | null {
+    return this.active?.getPlayerPosition?.() ?? null
+  }
+
+  getAmbientCount(): number {
+    return this.active?.getAmbientCount?.() ?? 0
   }
 
   destroy(): void {

@@ -5,15 +5,23 @@ import type { SceneId as EngineSceneId } from '@/engine/scene/SceneId'
 import { useSceneStore, type OverlayId, type SceneId as UiSceneId } from '@/stores/useSceneStore'
 import { usePlayerStore } from '@/stores/usePlayerStore'
 import { useWorldStore } from '@/stores/useWorldStore'
+import { usePresenceStore } from '@/stores/usePresenceStore'
+import { useSessionStore } from '@/stores/useSessionStore'
+import * as presenceApi from '@/services/api/presenceApi'
 
 const root = useTemplateRef<HTMLDivElement>('root')
 const scene = useSceneStore()
 const player = usePlayerStore()
 const world = useWorldStore()
+const presence = usePresenceStore()
+const session = useSessionStore()
+
+const HEARTBEAT_INTERVAL_MS = 1300
 
 let engine: Engine | null = null
 let disposed = false
 let stops: (() => void)[] = []
+let heartbeatTimer: ReturnType<typeof setInterval> | null = null
 
 const SCENE_MAP: Partial<Record<UiSceneId, EngineSceneId>> = {
   boot: 'boot',
@@ -34,6 +42,61 @@ function identity(): { name: string; avatar: string } {
 function handleEnter(target: string): void {
   if ((OVERLAY_BUILDINGS as string[]).includes(target)) {
     scene.openOverlay(target as OverlayId)
+  }
+}
+
+async function heartbeat(): Promise<void> {
+  if (!engine) {
+    return
+  }
+  const position = engine.getPlayerPosition()
+  const ambient = engine.getAmbientCount()
+  if (!position) {
+    return
+  }
+  if (!session.online) {
+    engine.setRemoteActors([])
+    presence.setRemotePlayers([])
+    presence.setOnlineCount(1 + ambient)
+    return
+  }
+  const self = identity()
+  const result = await presenceApi.heartbeat({
+    username: self.name,
+    avatar: self.avatar,
+    x: Math.round(position.x),
+    y: Math.round(position.y),
+    map: position.map,
+  })
+  if (result.status === 'ok' && result.data.ok) {
+    const others = (result.data.players ?? []).filter((remote) => remote.username !== self.name)
+    engine.setRemoteActors(others)
+    presence.setRemotePlayers(others)
+    presence.setOnlineCount((result.data.online ?? 1) + ambient)
+    if (result.data.time) {
+      presence.setServerOffset(result.data.time * 1000 - Date.now())
+    }
+    presence.markHeartbeat(Date.now())
+  } else {
+    session.setOnline(false)
+    engine.setRemoteActors([])
+    presence.setRemotePlayers([])
+    presence.setOnlineCount(1 + ambient)
+  }
+}
+
+function startHeartbeat(): void {
+  if (heartbeatTimer) {
+    return
+  }
+  void heartbeat()
+  heartbeatTimer = setInterval(() => void heartbeat(), HEARTBEAT_INTERVAL_MS)
+}
+
+function stopHeartbeat(): void {
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer)
+    heartbeatTimer = null
   }
 }
 
@@ -69,6 +132,11 @@ onMounted(async () => {
         if (target) {
           engine?.changeScene(target)
         }
+        if (id === 'world') {
+          startHeartbeat()
+        } else {
+          stopHeartbeat()
+        }
       },
     ),
     watch(
@@ -78,10 +146,14 @@ onMounted(async () => {
   ]
 
   engine.start(toEngineScene(scene.current) ?? 'boot')
+  if (scene.current === 'world') {
+    startHeartbeat()
+  }
 })
 
 onBeforeUnmount(() => {
   disposed = true
+  stopHeartbeat()
   stops.forEach((stop) => stop())
   stops = []
   world.setPrompt(null)

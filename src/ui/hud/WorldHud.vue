@@ -2,9 +2,11 @@
 import { computed } from 'vue'
 import { usePlayerStore } from '@/stores/usePlayerStore'
 import { useSceneStore, type OverlayId } from '@/stores/useSceneStore'
+import { usePresenceStore } from '@/stores/usePresenceStore'
 
 const player = usePlayerStore()
 const scene = useSceneStore()
+const presence = usePresenceStore()
 
 const username = computed(() => player.player?.account.username ?? '')
 const gold = computed(() => player.player?.currency.gold ?? 0)
@@ -28,6 +30,7 @@ const docks: { id: OverlayId; label: string; icon: string }[] = [
       <span class="hud__brand">CHARGE ARENA</span>
       <div class="hud__stats">
         <span class="badge">{{ username }}</span>
+        <span class="badge">👥 {{ presence.onlineCount }}</span>
         <span class="badge badge--gold">◈ {{ gold }}</span>
         <span class="badge badge--token">◆ {{ chargeToken }}</span>
         <span class="badge">▲ {{ rating }}</span>

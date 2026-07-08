@@ -4,10 +4,17 @@ import type { SceneId } from './SceneId'
 import type { EngineBus } from '@/engine/core/EngineBus'
 import type { Camera } from '@/engine/core/Camera'
 import type { AssetRegistry } from '@/engine/assets/AssetRegistry'
+import type { RemoteActorData } from '@/engine/world/WorldActor'
 
 export interface PlayerIdentity {
   name: string
   avatar: string
+}
+
+export interface PlayerPosition {
+  x: number
+  y: number
+  map: string
 }
 
 export interface SceneContext {
@@ -29,6 +36,9 @@ export interface Scene {
   resize?(width: number, height: number): void
   setInputEnabled?(enabled: boolean): void
   setPlayerIdentity?(identity: PlayerIdentity): void
+  setRemoteActors?(actors: RemoteActorData[]): void
+  getPlayerPosition?(): PlayerPosition
+  getAmbientCount?(): number
   destroy(): void
 }
 

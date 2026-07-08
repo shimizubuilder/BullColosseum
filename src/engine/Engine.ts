@@ -5,8 +5,9 @@ import { Camera } from './core/Camera'
 import { EngineBus } from './core/EngineBus'
 import { AssetRegistry } from './assets/AssetRegistry'
 import { SceneManager } from './scene/SceneManager'
-import type { PlayerIdentity, SceneContext } from './scene/Scene'
+import type { PlayerIdentity, PlayerPosition, SceneContext } from './scene/Scene'
 import type { SceneId } from './scene/SceneId'
+import type { RemoteActorData } from './world/WorldActor'
 
 export class Engine {
   readonly bus = new EngineBus()
@@ -64,6 +65,18 @@ export class Engine {
     this.identity.name = identity.name
     this.identity.avatar = identity.avatar
     this.manager.setPlayerIdentity(this.identity)
+  }
+
+  setRemoteActors(actors: RemoteActorData[]): void {
+    this.manager.setRemoteActors(actors)
+  }
+
+  getPlayerPosition(): PlayerPosition | null {
+    return this.manager.getPlayerPosition()
+  }
+
+  getAmbientCount(): number {
+    return this.manager.getAmbientCount()
   }
 
   get currentSceneId(): SceneId | null {

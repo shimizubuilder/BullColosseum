@@ -1,5 +1,5 @@
 import { Container } from 'pixi.js'
-import { BaseScene, type PlayerIdentity, type SceneContext } from '@/engine/scene/Scene'
+import { BaseScene, type PlayerIdentity, type PlayerPosition, type SceneContext } from '@/engine/scene/Scene'
 import { isoBounds, isoToWorld, worldToIso } from '@/engine/iso/isoMath'
 import { MAIN_MAP } from '@/domain/maps/mainMap'
 import type { BuildingDef, MapDefinition } from '@/domain/maps/mapTypes'
@@ -12,8 +12,24 @@ import { AvatarSprite } from '@/engine/world/AvatarSprite'
 import { Minimap } from '@/engine/world/Minimap'
 import { WorldInput } from '@/engine/input/WorldInput'
 import { buildingDoor, pickBuildingAtScreen, promptAt } from '@/engine/world/worldInteractions'
+import { WorldActor, type RemoteActorData } from '@/engine/world/WorldActor'
 
 const PLAYER_SPEED = 260
+const NPC_SPEED = 95
+const REMOTE_SPEED = 320
+const NPC_NAME_COLOR = 0xcfc3e6
+const REMOTE_NAME_COLOR = 0x8affc0
+const AMBIENT_NPCS: { name: string; avatar: string }[] = [
+  { name: 'Toroshi', avatar: 'red' },
+  { name: 'MoonGored', avatar: 'gold' },
+  { name: 'HornDegen', avatar: 'bolt' },
+  { name: 'CalfEnjoyer', avatar: 'shadow' },
+  { name: 'SolBull', avatar: 'ansem' },
+]
+
+function wanderTarget(map: MapDefinition): Point {
+  return { x: 200 + Math.random() * (map.width - 400), y: 200 + Math.random() * (map.height - 400) }
+}
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value))
@@ -48,6 +64,8 @@ export class OverworldScene extends BaseScene {
   private readonly minimap: Minimap
 
   private readonly player: PlayerState
+  private readonly npcs: WorldActor[] = []
+  private readonly remotes = new Map<string, WorldActor>()
   private input: WorldInput | null = null
   private inputEnabled = true
   private cameraX = 0
@@ -81,6 +99,14 @@ export class OverworldScene extends BaseScene {
     this.avatar = new AvatarSprite(context.playerIdentity.avatar, context.playerIdentity.name)
     this.avatarHolder.addChild(this.avatar.container)
     this.entityLayer.addChild(this.avatarHolder)
+
+    for (const definition of AMBIENT_NPCS) {
+      const spawn = wanderTarget(this.map)
+      const npc = new WorldActor(definition.avatar, definition.name, spawn.x, spawn.y, NPC_NAME_COLOR)
+      npc.setTarget(wanderTarget(this.map).x, wanderTarget(this.map).y)
+      this.entityLayer.addChild(npc.container)
+      this.npcs.push(npc)
+    }
 
     this.minimap = new Minimap(this.map)
     this.hudLayer.addChild(this.minimap.container)
@@ -126,6 +152,10 @@ export class OverworldScene extends BaseScene {
     if (this.input.consumeEnter() && this.promptTarget) {
       this.emitEnter(this.promptTarget)
     }
+
+    this.updateAmbient(fixedDt)
+    this.updateRemotes(fixedDt)
+
     if (!this.inputEnabled) {
       return
     }
@@ -190,8 +220,67 @@ export class OverworldScene extends BaseScene {
     this.avatar.setFacing(this.player.facing)
     this.avatar.update(this.player.phase)
 
+    for (const npc of this.npcs) {
+      npc.syncSprite()
+    }
+    for (const remote of this.remotes.values()) {
+      remote.syncSprite()
+    }
+
     this.minimap.container.position.set(width - this.minimap.width - 16, 16)
     this.minimap.update(this.player.x, this.player.y)
+  }
+
+  private updateAmbient(fixedDt: number): void {
+    for (const npc of this.npcs) {
+      if (npc.waitTimer > 0) {
+        npc.waitTimer -= fixedDt
+        npc.idle()
+        continue
+      }
+      npc.moveToward(fixedDt, NPC_SPEED)
+      if (npc.reachedTarget()) {
+        npc.waitTimer = 0.5 + Math.random() * 2
+        const next = wanderTarget(this.map)
+        npc.setTarget(next.x, next.y)
+      }
+    }
+  }
+
+  private updateRemotes(fixedDt: number): void {
+    for (const remote of this.remotes.values()) {
+      remote.moveToward(fixedDt, REMOTE_SPEED)
+    }
+  }
+
+  setRemoteActors(actors: RemoteActorData[]): void {
+    const seen = new Set<string>()
+    for (const actor of actors) {
+      seen.add(actor.username)
+      const existing = this.remotes.get(actor.username)
+      if (existing) {
+        existing.setTarget(actor.x, actor.y)
+        existing.setIdentity(actor.avatar, actor.username)
+      } else {
+        const created = new WorldActor(actor.avatar, actor.username, actor.x, actor.y, REMOTE_NAME_COLOR)
+        this.entityLayer.addChild(created.container)
+        this.remotes.set(actor.username, created)
+      }
+    }
+    for (const [username, remote] of this.remotes) {
+      if (!seen.has(username)) {
+        remote.destroy()
+        this.remotes.delete(username)
+      }
+    }
+  }
+
+  getPlayerPosition(): PlayerPosition {
+    return { x: this.player.x, y: this.player.y, map: 'main' }
+  }
+
+  getAmbientCount(): number {
+    return this.npcs.length
   }
 
   private handleClick(screenX: number, screenY: number): void {
