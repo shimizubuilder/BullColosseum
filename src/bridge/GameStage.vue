@@ -28,6 +28,7 @@ const SCENE_MAP: Partial<Record<UiSceneId, EngineSceneId>> = {
   boot: 'boot',
   login: 'login',
   world: 'overworld',
+  farm: 'farm',
 }
 
 const OVERLAY_BUILDINGS: OverlayId[] = ['stable', 'shop', 'vault', 'leaderboard', 'quests']
@@ -43,6 +44,14 @@ function identity(): { name: string; avatar: string } {
 function handleEnter(target: string): void {
   if ((OVERLAY_BUILDINGS as string[]).includes(target)) {
     scene.openOverlay(target as OverlayId)
+    return
+  }
+  if (target === 'portal:farm') {
+    scene.goto('farm')
+    return
+  }
+  if (target === 'portal:main') {
+    scene.goto('world')
   }
 }
 
@@ -147,7 +156,7 @@ onMounted(async () => {
         if (target) {
           engine?.changeScene(target)
         }
-        if (id === 'world') {
+        if (id === 'world' || id === 'farm') {
           startHeartbeat()
         } else {
           stopHeartbeat()
@@ -161,7 +170,7 @@ onMounted(async () => {
   ]
 
   engine.start(toEngineScene(scene.current) ?? 'boot')
-  if (scene.current === 'world') {
+  if (scene.current === 'world' || scene.current === 'farm') {
     startHeartbeat()
   }
 })

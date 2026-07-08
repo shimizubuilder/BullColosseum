@@ -10,6 +10,7 @@ export class Minimap {
 
   constructor(
     private readonly map: MapDefinition,
+    private readonly title = 'MAIN WORLD',
     readonly width = 170,
     readonly height = 120,
   ) {
@@ -30,13 +31,18 @@ export class Minimap {
       const h = Math.max(2, building.depth * this.scale)
       structures.rect(this.originX + building.x * this.scale - w / 2, this.originY + building.y * this.scale - h / 2, w, h).fill(0xc9a24a)
     }
+    for (const plot of map.plots) {
+      const w = Math.max(2, plot.width * this.scale)
+      const h = Math.max(2, plot.depth * this.scale)
+      structures.rect(this.originX + plot.x * this.scale - w / 2, this.originY + plot.y * this.scale - h / 2, w, h).fill(0x6b5a3a)
+    }
     for (const portal of map.portals) {
       structures.circle(this.originX + portal.x * this.scale, this.originY + portal.y * this.scale, 3).fill(0x3fc9ff)
     }
     this.container.addChild(structures)
     this.container.addChild(this.marker)
 
-    const label = new Text({ text: 'MAIN WORLD', style: { fontFamily: 'Segoe UI, sans-serif', fontSize: 9, fill: 0xe8e0f5 } })
+    const label = new Text({ text: this.title, style: { fontFamily: 'Segoe UI, sans-serif', fontSize: 9, fill: 0xe8e0f5 } })
     label.position.set(6, 3)
     this.container.addChild(label)
   }

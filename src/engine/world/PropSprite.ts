@@ -14,6 +14,9 @@ export function createPropSprite(prop: PropDef): Graphics {
   } else if (prop.kind === 'rock') {
     graphics.circle(0, -8, 13).fill(0x8a8f96)
     graphics.circle(6, -4, 8).fill(0x6b7078)
+  } else if (prop.kind === 'hay') {
+    graphics.roundRect(-16, -22, 32, 22, 6).fill(0xd9b24a).stroke({ width: 2, color: 0xa9791b })
+    graphics.moveTo(0, -22).lineTo(0, 0).stroke({ width: 2, color: 0xb8922f })
   } else {
     graphics.circle(-6, -8, 10).fill(0x2f6d34)
     graphics.circle(6, -8, 11).fill(0x2f6d34)

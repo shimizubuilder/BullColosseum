@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { buildBlockedGrid, computePath, lineClear } from '@/engine/world/pathfinding'
+import { solidFootprints, structuresForMap } from '@/engine/world/worldInteractions'
 import { MAIN_MAP } from '@/domain/maps/mainMap'
 
-const grid = buildBlockedGrid(MAIN_MAP)
+const footprints = solidFootprints(structuresForMap(MAIN_MAP))
+const grid = buildBlockedGrid(footprints, MAIN_MAP.width, MAIN_MAP.height)
 
 describe('buildBlockedGrid', () => {
   it('marks building footprints as blocked', () => {
@@ -36,15 +38,13 @@ describe('lineClear', () => {
 
 describe('computePath', () => {
   it('returns a direct target when the line is clear', () => {
-    const path = computePath(MAIN_MAP, grid, 1500, 1950, 1500, 1750)
-    expect(path).toEqual([{ x: 1500, y: 1750 }])
+    expect(computePath(grid, 1500, 1950, 1500, 1750)).toEqual([{ x: 1500, y: 1750 }])
   })
 
   it('routes around a building and ends at the requested target', () => {
     const stable = MAIN_MAP.buildings.find((b) => b.key === 'stable')!
-    const path = computePath(MAIN_MAP, grid, stable.x - 320, stable.y, stable.x + 320, stable.y)
+    const path = computePath(grid, stable.x - 320, stable.y, stable.x + 320, stable.y)
     expect(path.length).toBeGreaterThan(1)
-    const last = path[path.length - 1]
-    expect(last).toEqual({ x: stable.x + 320, y: stable.y })
+    expect(path[path.length - 1]).toEqual({ x: stable.x + 320, y: stable.y })
   })
 })

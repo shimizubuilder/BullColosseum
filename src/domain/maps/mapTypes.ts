@@ -21,7 +21,7 @@ export interface PortalDef {
   label: string
 }
 
-export type PropKind = 'tree' | 'rock' | 'bush'
+export type PropKind = 'tree' | 'rock' | 'bush' | 'hay'
 
 export interface PropDef {
   x: number
@@ -29,11 +29,23 @@ export interface PropDef {
   kind: PropKind
 }
 
+export interface PlotDef {
+  index: number
+  x: number
+  y: number
+  width: number
+  depth: number
+}
+
+export type GroundStyle = 'grass' | 'farm'
+
 export interface MapDefinition {
   width: number
   height: number
   spawn: { x: number; y: number }
+  ground: GroundStyle
   buildings: BuildingDef[]
+  plots: PlotDef[]
   portals: PortalDef[]
   props: PropDef[]
 }

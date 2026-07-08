@@ -1,17 +1,24 @@
 import { Container } from 'pixi.js'
 import { BaseScene, type PlayerIdentity, type PlayerPosition, type SceneContext } from '@/engine/scene/Scene'
-import { isoBounds, isoToWorld, worldToIso } from '@/engine/iso/isoMath'
-import { MAIN_MAP } from '@/domain/maps/mainMap'
-import type { BuildingDef, MapDefinition } from '@/domain/maps/mapTypes'
+import type { SceneId } from '@/engine/scene/SceneId'
+import { isoBounds, isoToWorld, worldToIso, type Point } from '@/engine/iso/isoMath'
+import type { MapDefinition } from '@/domain/maps/mapTypes'
 import { buildBlockedGrid, computePath, type BlockedGrid } from '@/engine/world/pathfinding'
-import type { Point } from '@/engine/iso/isoMath'
 import { createGroundLayer } from '@/engine/world/GroundLayer'
 import { createBuildingSprite } from '@/engine/world/BuildingSprite'
+import { createPlotSprite } from '@/engine/world/PlotSprite'
+import { createPortalSprite } from '@/engine/world/PortalSprite'
 import { createPropSprite } from '@/engine/world/PropSprite'
 import { AvatarSprite } from '@/engine/world/AvatarSprite'
 import { Minimap } from '@/engine/world/Minimap'
 import { WorldInput } from '@/engine/input/WorldInput'
-import { buildingDoor, pickBuildingAtScreen, promptAt } from '@/engine/world/worldInteractions'
+import {
+  pickStructureAtScreen,
+  promptStructureAt,
+  solidFootprints,
+  structuresForMap,
+  type WorldStructure,
+} from '@/engine/world/worldInteractions'
 import { WorldActor, type RemoteActorData } from '@/engine/world/WorldActor'
 import { EnvironmentLayer } from '@/engine/world/EnvironmentLayer'
 
@@ -20,20 +27,18 @@ const NPC_SPEED = 95
 const REMOTE_SPEED = 320
 const NPC_NAME_COLOR = 0xcfc3e6
 const REMOTE_NAME_COLOR = 0x8affc0
-const AMBIENT_NPCS: { name: string; avatar: string }[] = [
-  { name: 'Toroshi', avatar: 'red' },
-  { name: 'MoonGored', avatar: 'gold' },
-  { name: 'HornDegen', avatar: 'bolt' },
-  { name: 'CalfEnjoyer', avatar: 'shadow' },
-  { name: 'SolBull', avatar: 'ansem' },
-]
 
-function wanderTarget(map: MapDefinition): Point {
-  return { x: 200 + Math.random() * (map.width - 400), y: 200 + Math.random() * (map.height - 400) }
+export interface AmbientNpc {
+  name: string
+  avatar: string
 }
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value))
+export interface IsoWorldConfig {
+  id: SceneId
+  map: MapDefinition
+  mapKey: string
+  minimapTitle: string
+  ambientNpcs: AmbientNpc[]
 }
 
 interface PlayerState {
@@ -52,11 +57,17 @@ interface EnterIntent {
   radius: number
 }
 
-export class OverworldScene extends BaseScene {
-  readonly id = 'overworld' as const
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value))
+}
 
-  private readonly map: MapDefinition = MAIN_MAP
-  private readonly grid: BlockedGrid = buildBlockedGrid(MAIN_MAP)
+export class IsoWorldScene extends BaseScene {
+  readonly id: SceneId
+
+  private readonly config: IsoWorldConfig
+  private readonly map: MapDefinition
+  private readonly structures: WorldStructure[]
+  private readonly grid: BlockedGrid
   private readonly worldLayer = new Container()
   private readonly entityLayer = new Container()
   private readonly hudLayer = new Container()
@@ -76,11 +87,16 @@ export class OverworldScene extends BaseScene {
   private promptTarget: string | null = null
   private pendingEnter: EnterIntent | null = null
 
-  constructor(context: SceneContext) {
+  constructor(context: SceneContext, config: IsoWorldConfig) {
     super(context)
+    this.id = config.id
+    this.config = config
+    this.map = config.map
+    this.structures = structuresForMap(config.map)
+    this.grid = buildBlockedGrid(solidFootprints(this.structures), config.map.width, config.map.height)
     this.player = { x: this.map.spawn.x, y: this.map.spawn.y, facing: 1, phase: 0, path: null, pathIndex: 0 }
 
-    this.worldLayer.addChild(createGroundLayer(this.map.width, this.map.height))
+    this.worldLayer.addChild(createGroundLayer(this.map.width, this.map.height, this.map.ground))
     this.entityLayer.sortableChildren = true
     this.worldLayer.addChild(this.entityLayer)
     this.root.addChild(this.environment.background)
@@ -94,6 +110,14 @@ export class OverworldScene extends BaseScene {
       sprite.zIndex = building.x + building.y
       this.entityLayer.addChild(sprite)
     }
+    for (const plot of this.map.plots) {
+      const sprite = createPlotSprite(plot)
+      sprite.zIndex = plot.x + plot.y
+      this.entityLayer.addChild(sprite)
+    }
+    for (const portal of this.map.portals) {
+      this.entityLayer.addChild(createPortalSprite(portal))
+    }
     for (const prop of this.map.props) {
       const sprite = createPropSprite(prop)
       sprite.zIndex = prop.x + prop.y
@@ -104,15 +128,16 @@ export class OverworldScene extends BaseScene {
     this.avatarHolder.addChild(this.avatar.container)
     this.entityLayer.addChild(this.avatarHolder)
 
-    for (const definition of AMBIENT_NPCS) {
-      const spawn = wanderTarget(this.map)
+    for (const definition of config.ambientNpcs) {
+      const spawn = this.wanderTarget()
       const npc = new WorldActor(definition.avatar, definition.name, spawn.x, spawn.y, NPC_NAME_COLOR)
-      npc.setTarget(wanderTarget(this.map).x, wanderTarget(this.map).y)
+      const target = this.wanderTarget()
+      npc.setTarget(target.x, target.y)
       this.entityLayer.addChild(npc.container)
       this.npcs.push(npc)
     }
 
-    this.minimap = new Minimap(this.map)
+    this.minimap = new Minimap(this.map, config.minimapTitle)
     this.hudLayer.addChild(this.minimap.container)
     this.root.addChild(this.hudLayer)
   }
@@ -237,28 +262,6 @@ export class OverworldScene extends BaseScene {
     this.environment.update(Date.now() + this.context.serverOffset, width, height)
   }
 
-  private updateAmbient(fixedDt: number): void {
-    for (const npc of this.npcs) {
-      if (npc.waitTimer > 0) {
-        npc.waitTimer -= fixedDt
-        npc.idle()
-        continue
-      }
-      npc.moveToward(fixedDt, NPC_SPEED)
-      if (npc.reachedTarget()) {
-        npc.waitTimer = 0.5 + Math.random() * 2
-        const next = wanderTarget(this.map)
-        npc.setTarget(next.x, next.y)
-      }
-    }
-  }
-
-  private updateRemotes(fixedDt: number): void {
-    for (const remote of this.remotes.values()) {
-      remote.moveToward(fixedDt, REMOTE_SPEED)
-    }
-  }
-
   setRemoteActors(actors: RemoteActorData[]): void {
     const seen = new Set<string>()
     for (const actor of actors) {
@@ -282,28 +285,50 @@ export class OverworldScene extends BaseScene {
   }
 
   getPlayerPosition(): PlayerPosition {
-    return { x: this.player.x, y: this.player.y, map: 'main' }
+    return { x: this.player.x, y: this.player.y, map: this.config.mapKey }
   }
 
   getAmbientCount(): number {
     return this.npcs.length
   }
 
+  private wanderTarget(): Point {
+    return { x: 200 + Math.random() * (this.map.width - 400), y: 200 + Math.random() * (this.map.height - 400) }
+  }
+
+  private updateAmbient(fixedDt: number): void {
+    for (const npc of this.npcs) {
+      if (npc.waitTimer > 0) {
+        npc.waitTimer -= fixedDt
+        npc.idle()
+        continue
+      }
+      npc.moveToward(fixedDt, NPC_SPEED)
+      if (npc.reachedTarget()) {
+        npc.waitTimer = 0.5 + Math.random() * 2
+        const next = this.wanderTarget()
+        npc.setTarget(next.x, next.y)
+      }
+    }
+  }
+
+  private updateRemotes(fixedDt: number): void {
+    for (const remote of this.remotes.values()) {
+      remote.moveToward(fixedDt, REMOTE_SPEED)
+    }
+  }
+
   private handleClick(screenX: number, screenY: number): void {
     const world = isoToWorld(screenX + this.cameraX, screenY + this.cameraY)
-    const building =
-      pickBuildingAtScreen(this.map.buildings, screenX, screenY, this.cameraX, this.cameraY) ??
-      this.buildingAt(world.x, world.y)
-    if (building) {
-      const door = buildingDoor(building)
-      this.setPath(door.x, door.y)
-      this.pendingEnter = { target: building.key, doorX: door.x, doorY: door.y, radius: 78 }
-      return
-    }
-    const portal = this.portalAt(world.x, world.y)
-    if (portal) {
-      this.setPath(portal.x, portal.y)
-      this.pendingEnter = { target: `portal:${portal.target}`, doorX: portal.x, doorY: portal.y, radius: 54 }
+    const structure = pickStructureAtScreen(this.structures, screenX, screenY, world.x, world.y, this.cameraX, this.cameraY)
+    if (structure) {
+      this.setPath(structure.doorX, structure.doorY)
+      this.pendingEnter = {
+        target: structure.target,
+        doorX: structure.doorX,
+        doorY: structure.doorY,
+        radius: structure.enterRadius,
+      }
       return
     }
     this.pendingEnter = null
@@ -311,45 +336,25 @@ export class OverworldScene extends BaseScene {
   }
 
   private setPath(targetX: number, targetY: number): void {
-    this.player.path = computePath(this.map, this.grid, this.player.x, this.player.y, targetX, targetY)
+    this.player.path = computePath(this.grid, this.player.x, this.player.y, targetX, targetY)
     this.player.pathIndex = 0
   }
 
-  private buildingAt(worldX: number, worldY: number): BuildingDef | null {
-    for (const building of this.map.buildings) {
-      if (
-        worldX > building.x - building.width / 2 - 14 &&
-        worldX < building.x + building.width / 2 + 14 &&
-        worldY > building.y - building.depth / 2 - 14 &&
-        worldY < building.y + building.depth / 2 + 34
-      ) {
-        return building
-      }
-    }
-    return null
-  }
-
-  private portalAt(worldX: number, worldY: number): MapDefinition['portals'][number] | null {
-    for (const portal of this.map.portals) {
-      if (Math.hypot(worldX - portal.x, worldY - portal.y) < 60) {
-        return portal
-      }
-    }
-    return null
-  }
-
   private resolveCollisions(): void {
-    for (const building of this.map.buildings) {
-      const centerY = building.y - building.depth * 0.05
-      const halfWidth = building.width / 2 + 16
-      const halfDepth = building.depth * 0.42 + 16
-      const offsetX = this.player.x - building.x
+    for (const structure of this.structures) {
+      if (!structure.solid || structure.halfWidth <= 0) {
+        continue
+      }
+      const centerY = structure.y - structure.halfDepth * 0.1
+      const halfWidth = structure.halfWidth + 16
+      const halfDepth = structure.halfDepth * 0.84 + 16
+      const offsetX = this.player.x - structure.x
       const offsetY = this.player.y - centerY
       if (Math.abs(offsetX) < halfWidth && Math.abs(offsetY) < halfDepth) {
         const pushX = halfWidth - Math.abs(offsetX)
         const pushY = halfDepth - Math.abs(offsetY)
         if (pushX < pushY) {
-          this.player.x = building.x + (offsetX < 0 ? -halfWidth : halfWidth)
+          this.player.x = structure.x + (offsetX < 0 ? -halfWidth : halfWidth)
         } else {
           this.player.y = centerY + (offsetY < 0 ? -halfDepth : halfDepth)
         }
@@ -358,9 +363,9 @@ export class OverworldScene extends BaseScene {
   }
 
   private updateProximity(): void {
-    const info = promptAt(this.map, this.player.x, this.player.y)
-    this.promptTarget = info?.target ?? null
-    const prompt = info?.text ?? null
+    const structure = promptStructureAt(this.structures, this.player.x, this.player.y)
+    this.promptTarget = structure?.target ?? null
+    const prompt = structure?.label ?? null
     if (prompt !== this.prompt) {
       this.prompt = prompt
       this.context.bus.emit('world:prompt', { text: prompt })

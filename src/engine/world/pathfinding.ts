@@ -1,5 +1,11 @@
-import type { MapDefinition } from '@/domain/maps/mapTypes'
 import type { Point } from '@/engine/iso/isoMath'
+
+export interface Footprint {
+  x: number
+  y: number
+  halfWidth: number
+  halfDepth: number
+}
 
 export interface BlockedGrid {
   cell: number
@@ -8,16 +14,16 @@ export interface BlockedGrid {
   blocked: Uint8Array
 }
 
-export function buildBlockedGrid(map: MapDefinition, cell = 40): BlockedGrid {
-  const cols = Math.ceil(map.width / cell)
-  const rows = Math.ceil(map.height / cell)
+export function buildBlockedGrid(footprints: Footprint[], width: number, height: number, cell = 40): BlockedGrid {
+  const cols = Math.ceil(width / cell)
+  const rows = Math.ceil(height / cell)
   const blocked = new Uint8Array(cols * rows)
-  for (const building of map.buildings) {
-    const centerY = building.y - building.depth * 0.05
-    const halfWidth = building.width / 2 + 20
-    const halfDepth = building.depth * 0.42 + 20
-    const x0 = Math.max(0, Math.floor((building.x - halfWidth) / cell))
-    const x1 = Math.min(cols - 1, Math.floor((building.x + halfWidth) / cell))
+  for (const footprint of footprints) {
+    const centerY = footprint.y - footprint.halfDepth * 0.1
+    const halfWidth = footprint.halfWidth + 20
+    const halfDepth = footprint.halfDepth * 0.84 + 20
+    const x0 = Math.max(0, Math.floor((footprint.x - halfWidth) / cell))
+    const x1 = Math.min(cols - 1, Math.floor((footprint.x + halfWidth) / cell))
     const y0 = Math.max(0, Math.floor((centerY - halfDepth) / cell))
     const y1 = Math.min(rows - 1, Math.floor((centerY + halfDepth) / cell))
     for (let gy = y0; gy <= y1; gy += 1) {
@@ -159,14 +165,7 @@ export function findPath(grid: BlockedGrid, sx: number, sy: number, tx: number, 
   return smoothed
 }
 
-export function computePath(
-  map: MapDefinition,
-  grid: BlockedGrid,
-  sx: number,
-  sy: number,
-  tx: number,
-  ty: number,
-): Point[] {
+export function computePath(grid: BlockedGrid, sx: number, sy: number, tx: number, ty: number): Point[] {
   if (lineClear(grid, sx, sy, tx, ty)) {
     return [{ x: tx, y: ty }]
   }

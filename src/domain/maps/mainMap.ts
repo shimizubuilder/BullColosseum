@@ -46,7 +46,9 @@ export const MAIN_MAP: MapDefinition = {
   width: 3000,
   height: 2200,
   spawn: { x: 1500, y: 1950 },
+  ground: 'grass',
   buildings: BUILDINGS,
+  plots: [],
   portals: PORTALS,
   props: scatterProps(3000, 2200, 44, BUILDINGS),
 }
