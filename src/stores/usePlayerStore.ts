@@ -232,6 +232,15 @@ export const usePlayerStore = defineStore('player', () => {
     player.value.currency.chargeToken += token
   }
 
+  function chargeGold(amount: number): boolean {
+    if (!player.value || amount <= 0 || player.value.currency.gold < amount) {
+      return false
+    }
+    player.value.currency.gold -= amount
+    void save()
+    return true
+  }
+
   function recordWallet(address: string): void {
     if (!player.value) {
       return
@@ -311,6 +320,7 @@ export const usePlayerStore = defineStore('player', () => {
     buyCalf,
     breed,
     grantReward,
+    chargeGold,
     recordWallet,
     markWalletLinked,
     renameAccount,

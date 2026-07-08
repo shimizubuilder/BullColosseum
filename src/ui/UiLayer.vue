@@ -15,6 +15,7 @@ import GuideScreen from './screens/GuideScreen.vue'
 import KandangScreen from './screens/KandangScreen.vue'
 import ArenaLobbyScreen from './screens/ArenaLobbyScreen.vue'
 import KingScreen from './screens/KingScreen.vue'
+import TournamentScreen from './screens/TournamentScreen.vue'
 import ResultCard from './hud/ResultCard.vue'
 
 const scene = useSceneStore()
@@ -32,6 +33,7 @@ const overlays = {
   kandang: KandangScreen,
   colosseum: ArenaLobbyScreen,
   king: KingScreen,
+  tournament: TournamentScreen,
 }
 const overlayComponent = computed(() =>
   scene.overlay ? (overlays[scene.overlay as keyof typeof overlays] ?? null) : null,

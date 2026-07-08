@@ -30,6 +30,13 @@ function fight(): void {
           <small>Charge into a rated match. Win to climb divisions.</small>
         </span>
       </button>
+      <button class="lobby__card" type="button" @click="scene.openOverlay('tournament')">
+        <span class="lobby__icon">🏆</span>
+        <span class="lobby__text">
+          <b>Tournament</b>
+          <small>Single-elim bracket. Win it all to take the prize pool.</small>
+        </span>
+      </button>
       <button class="lobby__card" type="button" @click="scene.openOverlay('king')">
         <span class="lobby__icon">👑</span>
         <span class="lobby__text">
