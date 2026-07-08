@@ -1,11 +1,39 @@
-import { Container, Graphics, Text } from 'pixi.js'
+import { Container, Graphics, Sprite, Text } from 'pixi.js'
 import type { BuildingDef } from '@/domain/maps/mapTypes'
+import type { AssetRegistry } from '@/engine/assets/AssetRegistry'
+import type { SpriteKey } from '@/engine/assets/assetManifest'
 import { ISO, worldToIso, type Point } from '@/engine/iso/isoMath'
 import { hexToNumber, shade } from './color'
 import { createLabelPlate } from './labelPlate'
 
-export function createBuildingSprite(building: BuildingDef): Container {
+export function createBuildingSprite(building: BuildingDef, assets?: AssetRegistry): Container {
   const container = new Container()
+  const loaded = assets?.sprite(`building.${building.key}` as SpriteKey) ?? null
+
+  if (loaded) {
+    const sprite = new Sprite(loaded.texture)
+    sprite.anchor.set(loaded.asset.anchorX, loaded.asset.anchorY)
+    const targetWidth = (building.width + building.depth) * ISO
+    const scale = targetWidth / loaded.texture.width
+    sprite.scale.set(scale)
+    sprite.position.set(0, ((building.width / 2 + building.depth / 2) * ISO) / 2)
+    container.addChild(sprite)
+  } else {
+    container.addChild(buildPlaceholderBox(building))
+    const icon = new Text({ text: building.icon, style: { fontSize: Math.round(building.height * 0.5), fill: 0xffffff } })
+    icon.anchor.set(0.5)
+    icon.position.set(0, -building.height - 6)
+    container.addChild(icon)
+  }
+
+  const label = createLabelPlate(building.label)
+  label.position.set(0, 16)
+  container.addChild(label)
+
+  return container
+}
+
+function buildPlaceholderBox(building: BuildingDef): Graphics {
   const center = worldToIso(building.x, building.y)
   const relative = (worldX: number, worldY: number): Point => {
     const point = worldToIso(worldX, worldY)
@@ -38,16 +66,5 @@ export function createBuildingSprite(building: BuildingDef): Container {
     .poly([t0.x, t0.y, t1.x, t1.y, t2.x, t2.y, t3.x, t3.y])
     .fill(hexToNumber(building.roof))
     .stroke({ width: 1, color: 0x000000, alpha: 0.3 })
-  container.addChild(graphics)
-
-  const icon = new Text({ text: building.icon, style: { fontSize: Math.round(height * 0.5), fill: 0xffffff } })
-  icon.anchor.set(0.5)
-  icon.position.set(0, -height - 6)
-  container.addChild(icon)
-
-  const label = createLabelPlate(building.label)
-  label.position.set(0, 16)
-  container.addChild(label)
-
-  return container
+  return graphics
 }

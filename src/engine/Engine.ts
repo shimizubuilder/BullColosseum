@@ -38,7 +38,9 @@ export class Engine {
 
   static async create(options?: GameAppOptions): Promise<Engine> {
     const gameApp = await GameApp.create(options)
-    return new Engine(gameApp)
+    const engine = new Engine(gameApp)
+    await engine.assets.load()
+    return engine
   }
 
   mount(container: HTMLElement): void {

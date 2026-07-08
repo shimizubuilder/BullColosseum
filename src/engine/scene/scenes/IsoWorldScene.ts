@@ -105,7 +105,7 @@ export class IsoWorldScene extends BaseScene {
     this.root.addChild(this.environment.foreground)
 
     for (const building of this.map.buildings) {
-      const sprite = createBuildingSprite(building)
+      const sprite = createBuildingSprite(building, context.assets)
       const iso = worldToIso(building.x, building.y)
       sprite.position.set(iso.x, iso.y)
       sprite.zIndex = building.x + building.y
@@ -118,10 +118,10 @@ export class IsoWorldScene extends BaseScene {
       this.plotSprites.set(plot.index, sprite)
     }
     for (const portal of this.map.portals) {
-      this.entityLayer.addChild(createPortalSprite(portal))
+      this.entityLayer.addChild(createPortalSprite(portal, context.assets))
     }
     for (const prop of this.map.props) {
-      const sprite = createPropSprite(prop)
+      const sprite = createPropSprite(prop, context.assets)
       sprite.zIndex = prop.x + prop.y
       this.entityLayer.addChild(sprite)
     }

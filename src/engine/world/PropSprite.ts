@@ -1,8 +1,29 @@
-import { Graphics } from 'pixi.js'
+import { Container, Graphics, Sprite } from 'pixi.js'
 import type { PropDef } from '@/domain/maps/mapTypes'
+import type { AssetRegistry } from '@/engine/assets/AssetRegistry'
+import type { SpriteKey } from '@/engine/assets/assetManifest'
 import { worldToIso } from '@/engine/iso/isoMath'
 
-export function createPropSprite(prop: PropDef): Graphics {
+export function createPropSprite(prop: PropDef, assets?: AssetRegistry): Container {
+  const iso = worldToIso(prop.x, prop.y)
+  const loaded = assets?.sprite(`prop.${prop.kind}` as SpriteKey) ?? null
+
+  if (loaded) {
+    const container = new Container()
+    const shadow = new Graphics()
+    shadow.ellipse(0, 0, 16, 7).fill({ color: 0x000000, alpha: 0.2 })
+    container.addChild(shadow)
+    const sprite = new Sprite(loaded.texture)
+    sprite.anchor.set(loaded.asset.anchorX, loaded.asset.anchorY)
+    if (loaded.asset.screenWidth) {
+      sprite.scale.set(loaded.asset.screenWidth / loaded.texture.width)
+    }
+    sprite.position.set(0, 4)
+    container.addChild(sprite)
+    container.position.set(iso.x, iso.y)
+    return container
+  }
+
   const graphics = new Graphics()
   graphics.ellipse(0, 0, 16, 7).fill({ color: 0x000000, alpha: 0.2 })
 
@@ -23,7 +44,6 @@ export function createPropSprite(prop: PropDef): Graphics {
     graphics.circle(0, -14, 10).fill(0x3a824a)
   }
 
-  const iso = worldToIso(prop.x, prop.y)
   graphics.position.set(iso.x, iso.y)
   return graphics
 }
