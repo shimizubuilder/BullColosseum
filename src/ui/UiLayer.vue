@@ -1,11 +1,17 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useSceneStore } from '@/stores/useSceneStore'
+import LoginScreen from './screens/LoginScreen.vue'
+import WorldHud from './hud/WorldHud.vue'
+
+const scene = useSceneStore()
+const showLogin = computed(() => scene.current === 'boot' || scene.current === 'login')
 </script>
 
 <template>
   <div class="ui-layer">
-    <header class="ui-topbar">
-      <span class="ui-brand">CHARGE ARENA</span>
-    </header>
+    <LoginScreen v-if="showLogin" />
+    <WorldHud v-else />
   </div>
 </template>
 
@@ -15,18 +21,5 @@
   inset: 0;
   z-index: 1;
   pointer-events: none;
-}
-
-.ui-topbar {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  pointer-events: auto;
-}
-
-.ui-brand {
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: var(--color-accent);
 }
 </style>
