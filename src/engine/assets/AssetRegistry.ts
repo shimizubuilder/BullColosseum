@@ -14,7 +14,7 @@ export class AssetRegistry {
   async load(manifestUrl = 'assets/manifest.json'): Promise<void> {
     let raw: unknown
     try {
-      raw = await Assets.load({ src: manifestUrl, loadParser: 'loadJson' })
+      raw = await Assets.load({ src: manifestUrl, parser: 'loadJson' })
     } catch {
       return
     }

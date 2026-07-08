@@ -405,6 +405,7 @@ onMounted(async () => {
   engine.start(toEngineScene(scene.current) ?? 'boot')
   if (scene.current === 'world' || scene.current === 'farm') {
     startHeartbeat()
+    void king.refresh(identity().name)
   }
 })
 
