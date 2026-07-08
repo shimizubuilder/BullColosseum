@@ -22,6 +22,7 @@ let engine: Engine | null = null
 let disposed = false
 let stops: (() => void)[] = []
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null
+let heartbeatInFlight = false
 
 const SCENE_MAP: Partial<Record<UiSceneId, EngineSceneId>> = {
   boot: 'boot',
@@ -46,44 +47,56 @@ function handleEnter(target: string): void {
 }
 
 async function heartbeat(): Promise<void> {
-  if (!engine) {
+  if (heartbeatInFlight) {
     return
   }
-  const position = engine.getPlayerPosition()
-  const ambient = engine.getAmbientCount()
+  const activeEngine = engine
+  if (!activeEngine) {
+    return
+  }
+  const position = activeEngine.getPlayerPosition()
+  const ambient = activeEngine.getAmbientCount()
   if (!position) {
     return
   }
   if (!session.online) {
-    engine.setRemoteActors([])
+    activeEngine.setRemoteActors([])
     presence.setRemotePlayers([])
     presence.setOnlineCount(1 + ambient)
     return
   }
-  const self = identity()
-  const result = await presenceApi.heartbeat({
-    username: self.name,
-    avatar: self.avatar,
-    x: Math.round(position.x),
-    y: Math.round(position.y),
-    map: position.map,
-  })
-  if (result.status === 'ok' && result.data.ok) {
-    const others = (result.data.players ?? []).filter((remote) => remote.username !== self.name)
-    engine.setRemoteActors(others)
-    presence.setRemotePlayers(others)
-    presence.setOnlineCount((result.data.online ?? 1) + ambient)
-    if (result.data.time) {
-      const offset = result.data.time * 1000 - Date.now()
-      presence.setServerOffset(offset)
-      engine.setServerOffset(offset)
+  heartbeatInFlight = true
+  try {
+    const self = identity()
+    const result = await presenceApi.heartbeat({
+      username: self.name,
+      avatar: self.avatar,
+      x: Math.round(position.x),
+      y: Math.round(position.y),
+      map: position.map,
+    })
+    if (disposed || engine !== activeEngine) {
+      return
     }
-    presence.markHeartbeat(Date.now())
-  } else {
-    session.setOnline(false)
-    engine.setRemoteActors([])
-    presence.setRemotePlayers([])
-    presence.setOnlineCount(1 + ambient)
+    if (result.status === 'ok' && result.data.ok) {
+      const others = (result.data.players ?? []).filter((remote) => remote.username !== self.name)
+      activeEngine.setRemoteActors(others)
+      presence.setRemotePlayers(others)
+      presence.setOnlineCount((result.data.online ?? 1) + ambient)
+      if (result.data.time) {
+        const offset = result.data.time * 1000 - Date.now()
+        presence.setServerOffset(offset)
+        activeEngine.setServerOffset(offset)
+      }
+      presence.markHeartbeat(Date.now())
+    } else {
+      session.setOnline(false)
+      activeEngine.setRemoteActors([])
+      presence.setRemotePlayers([])
+      presence.setOnlineCount(1 + ambient)
+    }
+  } finally {
+    heartbeatInFlight = false
   }
 }
 

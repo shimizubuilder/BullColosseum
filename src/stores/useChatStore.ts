@@ -14,6 +14,7 @@ export const useChatStore = defineStore('chat', () => {
   const mode = ref<'online' | 'offline'>('offline')
   const minimized = ref(false)
   let seeded = false
+  let polling = false
 
   function ingest(incoming: ChatMessageDto[]): void {
     const next = lastId.value === 0 ? incoming : [...messages.value, ...incoming]
@@ -36,19 +37,31 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   async function poll(): Promise<void> {
-    const session = useSessionStore()
-    if (!session.online) {
-      mode.value = 'offline'
-      ensureSeeded()
+    if (polling) {
       return
     }
-    const result = await chatApi.poll(lastId.value)
-    if (result.status === 'ok' && result.data.ok && result.data.messages) {
-      mode.value = 'online'
-      ingest(result.data.messages)
-    } else {
-      mode.value = 'offline'
-      ensureSeeded()
+    polling = true
+    try {
+      const session = useSessionStore()
+      if (!session.online) {
+        mode.value = 'offline'
+        if (messages.value.length === 0) {
+          ensureSeeded()
+        }
+        return
+      }
+      const result = await chatApi.poll(lastId.value)
+      if (result.status === 'ok' && result.data.ok && result.data.messages) {
+        mode.value = 'online'
+        ingest(result.data.messages)
+      } else if (result.status === 'offline') {
+        mode.value = 'offline'
+        if (messages.value.length === 0) {
+          ensureSeeded()
+        }
+      }
+    } finally {
+      polling = false
     }
   }
 
