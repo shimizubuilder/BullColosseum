@@ -4,6 +4,8 @@ import type { Player } from '@/domain/models/player'
 import { statsOf } from '@/domain/stats'
 import { divisionOf } from '@/domain/rating'
 import { applyXp, tierOf, xpForNext } from '@/domain/progression'
+import { trainingCost, trainingXp, vaultConversion } from '@/domain/economy'
+import { findGear, type GearId } from '@/domain/config/gear'
 import type { RegisterInput } from '@/services/api/playerApi'
 import { newLocalToken } from '@/services/offline/OfflineOracle'
 import {
@@ -72,6 +74,61 @@ export const usePlayerStore = defineStore('player', () => {
     session.setDataSource(outcome.source)
   }
 
+  function trainBull(): boolean {
+    if (!player.value) {
+      return false
+    }
+    const bull = player.value.activeBull
+    const cost = trainingCost(bull.level)
+    if (player.value.currency.gold < cost) {
+      return false
+    }
+    player.value.currency.gold -= cost
+    const progressed = applyXp(bull.level, bull.xp, trainingXp(bull.level))
+    bull.level = progressed.level
+    bull.xp = progressed.xp
+    void save()
+    return true
+  }
+
+  function buyGear(gearId: GearId): boolean {
+    if (!player.value) {
+      return false
+    }
+    const gear = findGear(gearId)
+    const bull = player.value.activeBull
+    if (!gear || bull.gear.includes(gearId)) {
+      return false
+    }
+    const wallet = player.value.currency
+    const balance = gear.currency === 'token' ? wallet.chargeToken : wallet.gold
+    if (balance < gear.cost) {
+      return false
+    }
+    if (gear.currency === 'token') {
+      wallet.chargeToken -= gear.cost
+    } else {
+      wallet.gold -= gear.cost
+    }
+    bull.gear.push(gearId)
+    void save()
+    return true
+  }
+
+  function convertVault(fraction: number): number {
+    if (!player.value) {
+      return 0
+    }
+    const { spentGold, mintedTokens } = vaultConversion(player.value.currency.gold, fraction)
+    if (spentGold <= 0) {
+      return 0
+    }
+    player.value.currency.gold -= spentGold
+    player.value.currency.chargeToken += mintedTokens
+    void save()
+    return mintedTokens
+  }
+
   return {
     player,
     activeBull,
@@ -85,5 +142,8 @@ export const usePlayerStore = defineStore('player', () => {
     resumeFromServer,
     save,
     applyMatchResult,
+    trainBull,
+    buyGear,
+    convertVault,
   }
 })
