@@ -13,6 +13,7 @@ import { Minimap } from '@/engine/world/Minimap'
 import { WorldInput } from '@/engine/input/WorldInput'
 import { buildingDoor, pickBuildingAtScreen, promptAt } from '@/engine/world/worldInteractions'
 import { WorldActor, type RemoteActorData } from '@/engine/world/WorldActor'
+import { EnvironmentLayer } from '@/engine/world/EnvironmentLayer'
 
 const PLAYER_SPEED = 260
 const NPC_SPEED = 95
@@ -59,6 +60,7 @@ export class OverworldScene extends BaseScene {
   private readonly worldLayer = new Container()
   private readonly entityLayer = new Container()
   private readonly hudLayer = new Container()
+  private readonly environment = new EnvironmentLayer()
   private readonly avatar: AvatarSprite
   private readonly avatarHolder = new Container()
   private readonly minimap: Minimap
@@ -81,7 +83,9 @@ export class OverworldScene extends BaseScene {
     this.worldLayer.addChild(createGroundLayer(this.map.width, this.map.height))
     this.entityLayer.sortableChildren = true
     this.worldLayer.addChild(this.entityLayer)
+    this.root.addChild(this.environment.background)
     this.root.addChild(this.worldLayer)
+    this.root.addChild(this.environment.foreground)
 
     for (const building of this.map.buildings) {
       const sprite = createBuildingSprite(building)
@@ -229,6 +233,8 @@ export class OverworldScene extends BaseScene {
 
     this.minimap.container.position.set(width - this.minimap.width - 16, 16)
     this.minimap.update(this.player.x, this.player.y)
+
+    this.environment.update(Date.now() + this.context.serverOffset, width, height)
   }
 
   private updateAmbient(fixedDt: number): void {

@@ -23,6 +23,7 @@ export interface SceneContext {
   camera: Camera
   assets: AssetRegistry
   playerIdentity: PlayerIdentity
+  serverOffset: number
 }
 
 export interface Scene {

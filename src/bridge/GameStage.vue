@@ -74,7 +74,9 @@ async function heartbeat(): Promise<void> {
     presence.setRemotePlayers(others)
     presence.setOnlineCount((result.data.online ?? 1) + ambient)
     if (result.data.time) {
-      presence.setServerOffset(result.data.time * 1000 - Date.now())
+      const offset = result.data.time * 1000 - Date.now()
+      presence.setServerOffset(offset)
+      engine.setServerOffset(offset)
     }
     presence.markHeartbeat(Date.now())
   } else {

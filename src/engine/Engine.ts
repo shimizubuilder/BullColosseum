@@ -18,15 +18,18 @@ export class Engine {
   private readonly manager: SceneManager
   private tickerHandler: ((ticker: Ticker) => void) | null = null
 
+  private readonly context: SceneContext
+
   private constructor(private readonly gameApp: GameApp) {
-    const context: SceneContext = {
+    this.context = {
       app: gameApp.pixi,
       bus: this.bus,
       camera: this.camera,
       assets: this.assets,
       playerIdentity: this.identity,
+      serverOffset: 0,
     }
-    this.manager = new SceneManager(gameApp.pixi.stage, context, this.bus)
+    this.manager = new SceneManager(gameApp.pixi.stage, this.context, this.bus)
     gameApp.pixi.renderer.on('resize', this.handleResize)
   }
 
@@ -69,6 +72,10 @@ export class Engine {
 
   setRemoteActors(actors: RemoteActorData[]): void {
     this.manager.setRemoteActors(actors)
+  }
+
+  setServerOffset(offsetMs: number): void {
+    this.context.serverOffset = offsetMs
   }
 
   getPlayerPosition(): PlayerPosition | null {
