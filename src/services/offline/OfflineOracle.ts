@@ -5,7 +5,8 @@ import { STARTING_CAPACITY, STARTING_GOLD, STARTING_RATING, STARTING_TOKEN } fro
 import type { Rng } from '@/domain/rng'
 import type { RegisterInput } from '@/services/api/playerApi'
 import type { LeaderboardEntryDto } from '@/services/dto/leaderboard.dto'
-import { FALLBACK_LEADERBOARD } from './fixtures'
+import type { ChatMessageDto } from '@/services/dto/chat.dto'
+import { FALLBACK_LEADERBOARD, SEEDED_CHAT } from './fixtures'
 
 export function newLocalToken(rng: Rng): string {
   return `local-${Math.floor(rng() * 1e12).toString(36)}`
@@ -40,4 +41,8 @@ export function offlineLeaderboard(self: LeaderboardEntryDto): LeaderboardEntryD
   const entries = [...FALLBACK_LEADERBOARD, self]
   entries.sort((first, second) => second.rating - first.rating)
   return entries.map((entry, index) => ({ ...entry, rank: index + 1 }))
+}
+
+export function seededChat(): ChatMessageDto[] {
+  return SEEDED_CHAT.map((message) => ({ ...message }))
 }
