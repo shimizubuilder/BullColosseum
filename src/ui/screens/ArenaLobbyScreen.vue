@@ -18,6 +18,11 @@ function fight(): void {
   scene.closeOverlay()
   duel.request('ranked')
 }
+
+function watchLive(): void {
+  scene.closeOverlay()
+  duel.request('spectate')
+}
 </script>
 
 <template>
@@ -28,6 +33,13 @@ function fight(): void {
         <span class="lobby__text">
           <b>Ranked Duel</b>
           <small>Charge into a rated match. Win to climb divisions.</small>
+        </span>
+      </button>
+      <button class="lobby__card" type="button" @click="watchLive">
+        <span class="lobby__icon">📺</span>
+        <span class="lobby__text">
+          <b>Watch Live</b>
+          <small>Spectate top-player duels and bet gold on the winner.</small>
         </span>
       </button>
       <button class="lobby__card" type="button" @click="scene.openOverlay('tournament')">

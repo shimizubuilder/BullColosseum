@@ -3,7 +3,7 @@ import { BaseScene, type SceneContext } from '@/engine/scene/Scene'
 import { lerp } from '@/domain/math'
 import { ELEMENTS } from '@/domain/config/elements'
 import { winWidth } from '@/domain/stats'
-import { DuelDirector, type DuelFighter, type DuelSnapshot } from '@/engine/duel/DuelDirector'
+import { DuelDirector, type DuelFighter, type DuelSetup, type DuelSnapshot } from '@/engine/duel/DuelDirector'
 import { BullSprite } from '@/engine/duel/BullSprite'
 
 const VIRTUAL_WIDTH = 960
@@ -34,9 +34,9 @@ export class DuelScene extends BaseScene {
   private readonly banner: Text
   private readonly meName: Text
   private readonly foeName: Text
-  private readonly director: DuelDirector
-  private readonly me: DuelFighter
-  private readonly foe: DuelFighter
+  private director: DuelDirector
+  private me: DuelFighter
+  private foe: DuelFighter
   private readonly meBull: BullSprite
   private readonly foeBull: BullSprite
 
@@ -113,6 +113,24 @@ export class DuelScene extends BaseScene {
   destroy(): void {
     this.exit()
     super.destroy()
+  }
+
+  restartDuel(setup: DuelSetup): void {
+    this.me = setup.me
+    this.foe = setup.foe
+    this.director = new DuelDirector(this.me, this.foe, Math.random, setup.spectate)
+    this.meBull.setColor(ELEMENTS[this.me.element].primaryColor)
+    this.foeBull.setColor(ELEMENTS[this.foe.element].primaryColor)
+    this.meName.text = `▸ ${this.me.name}`
+    this.foeName.text = `${this.foe.name} ◂`
+    this.meX = OUT_LEFT
+    this.foeX = OUT_RIGHT
+    this.meThrow = 0
+    this.foeThrow = 0
+    this.tapCount = 0
+    this.ended = false
+    this.lastBanner = ''
+    this.bannerTimer = 0
   }
 
   fixedUpdate(fixedDt: number): void {

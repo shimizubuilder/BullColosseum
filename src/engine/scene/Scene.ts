@@ -42,6 +42,7 @@ export interface Scene {
   setPlayerIdentity?(identity: PlayerIdentity): void
   setRemoteActors?(actors: RemoteActorData[]): void
   setFarms?(ownerships: PlotOwnership[]): void
+  restartDuel?(setup: DuelSetup): void
   getPlayerPosition?(): PlayerPosition
   getAmbientCount?(): number
   destroy(): void

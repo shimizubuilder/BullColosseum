@@ -7,6 +7,7 @@ import { createScene, isSceneRegistered } from './sceneRegistry'
 import type { PlayerIdentity, PlayerPosition } from './Scene'
 import type { RemoteActorData } from '@/engine/world/WorldActor'
 import type { PlotOwnership } from '@/engine/world/PlotSprite'
+import type { DuelSetup } from '@/engine/duel/DuelDirector'
 
 const COVER_MS = 300
 const REVEAL_MS = 260
@@ -102,6 +103,10 @@ export class SceneManager {
 
   setFarms(ownerships: PlotOwnership[]): void {
     this.active?.setFarms?.(ownerships)
+  }
+
+  restartDuel(setup: DuelSetup): void {
+    this.active?.restartDuel?.(setup)
   }
 
   getPlayerPosition(): PlayerPosition | null {

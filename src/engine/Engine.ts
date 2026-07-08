@@ -89,6 +89,11 @@ export class Engine {
     this.context.duelSetup = setup
   }
 
+  restartDuel(setup: DuelSetup): void {
+    this.context.duelSetup = setup
+    this.manager.restartDuel(setup)
+  }
+
   getPlayerPosition(): PlayerPosition | null {
     return this.manager.getPlayerPosition()
   }

@@ -97,6 +97,13 @@ export const SPECTATE = {
   skillRatingDivisor: 1600,
   skillMin: 0.45,
   skillMax: 0.92,
+  topPoolSize: 8,
+  viewersBase: 70,
+  viewersRange: 140,
+  viewersMin: 15,
+  viewersDriftRange: 16,
+  viewersDriftBias: 7,
+  nextMatchDelayMs: 2500,
 }
 
 export const BETTING = { stakes: [25, 50, 100, 200], payoutMultiplier: 1.9 }

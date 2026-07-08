@@ -10,13 +10,16 @@ import { useSessionStore } from '@/stores/useSessionStore'
 import { useFarmStore } from '@/stores/useFarmStore'
 import { useDuelStore, type DuelIntent } from '@/stores/useDuelStore'
 import { useKingStore } from '@/stores/useKingStore'
+import { useSpectateStore } from '@/stores/useSpectateStore'
+import { useLeaderboardStore } from '@/stores/useLeaderboardStore'
+import { useQuestStore } from '@/stores/useQuestStore'
 import * as presenceApi from '@/services/api/presenceApi'
 import type { PlotOwnership } from '@/engine/world/PlotSprite'
-import type { DuelFighter } from '@/engine/duel/DuelDirector'
-import { createOpponent } from '@/domain/combat/matchmaking'
+import type { DuelFighter, DuelSetup } from '@/engine/duel/DuelDirector'
+import { createOpponent, createSpectateFighter, type SpectateEntry } from '@/domain/combat/matchmaking'
 import { rollMatchReward } from '@/domain/combat/matchReward'
 import { kingChallengerSkill, kingChallengerStats, type KingBull } from '@/domain/combat/king'
-import { KING } from '@/domain/config/balance'
+import { KING, SPECTATE } from '@/domain/config/balance'
 import { statsOf } from '@/domain/stats'
 
 const root = useTemplateRef<HTMLDivElement>('root')
@@ -28,6 +31,9 @@ const session = useSessionStore()
 const farm = useFarmStore()
 const duel = useDuelStore()
 const king = useKingStore()
+const spectate = useSpectateStore()
+const leaderboard = useLeaderboardStore()
+const quest = useQuestStore()
 
 const HEARTBEAT_INTERVAL_MS = 1300
 
@@ -118,17 +124,72 @@ function startKingDuel(): void {
   scene.goto('duel')
 }
 
+function spectateFighter(entry: SpectateEntry): DuelFighter {
+  const fighter = createSpectateFighter(entry, Math.random)
+  return { name: fighter.name, element: fighter.element, stats: fighter.stats, skill: fighter.skill }
+}
+
+function spectateSetup(): DuelSetup | null {
+  const pair = spectate.pair
+  if (!pair) {
+    return null
+  }
+  return { me: spectateFighter(pair[0]), foe: spectateFighter(pair[1]), spectate: true }
+}
+
+async function startSpectate(): Promise<void> {
+  if (!engine) {
+    return
+  }
+  if (leaderboard.entries.length === 0) {
+    await leaderboard.load()
+  }
+  const entries: SpectateEntry[] = leaderboard.entries.map((entry) => ({
+    username: entry.username,
+    rating: entry.rating,
+    tier: entry.tier,
+  }))
+  spectate.begin(entries)
+  quest.progress('spectate', 1)
+  const setup = spectateSetup()
+  if (!setup || !engine) {
+    return
+  }
+  engine.setDuelSetup(setup)
+  duel.begin('spectate')
+  scene.goto('duel')
+}
+
+function handleSpectateEnd(won: boolean): void {
+  spectate.settle(won ? 'a' : 'b')
+  window.setTimeout(() => {
+    if (disposed || !engine || duel.context !== 'spectate' || !spectate.active) {
+      return
+    }
+    spectate.nextMatch()
+    const setup = spectateSetup()
+    if (setup) {
+      engine.restartDuel(setup)
+    }
+  }, SPECTATE.nextMatchDelayMs)
+}
+
 function runIntent(kind: DuelIntent): void {
   if (kind === 'ranked') {
     startRankedDuel()
   } else if (kind === 'king') {
     startKingDuel()
+  } else if (kind === 'spectate') {
+    void startSpectate()
   }
 }
 
 async function resolveRankedDuel(won: boolean, foeTier: number, myTier: number, opponentName: string): Promise<void> {
   const reward = rollMatchReward(won, foeTier, myTier, Math.random)
   const ratingDelta = await player.resolveMatch(won, reward, opponentName)
+  if (won) {
+    quest.progress('win', 1)
+  }
   duel.finish({ won, opponentName, reward, ratingDelta })
 }
 
@@ -159,6 +220,10 @@ async function resolveKingDuel(won: boolean, tier: number): Promise<void> {
 }
 
 async function resolveDuel(won: boolean): Promise<void> {
+  if (duel.context === 'spectate') {
+    handleSpectateEnd(won)
+    return
+  }
   const current = pendingDuel
   pendingDuel = null
   if (!current) {

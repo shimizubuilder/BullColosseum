@@ -6,7 +6,7 @@ export class BullSprite {
   private readonly body = new Graphics()
 
   constructor(
-    private readonly color: string,
+    private color: string,
     facing: number,
   ) {
     this.container.addChild(this.body)
@@ -16,6 +16,11 @@ export class BullSprite {
 
   setFacing(facing: number): void {
     this.container.scale.x = facing >= 0 ? 1 : -1
+  }
+
+  setColor(color: string): void {
+    this.color = color
+    this.draw(0)
   }
 
   update(legPhase: number): void {
