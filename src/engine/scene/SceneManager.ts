@@ -6,6 +6,7 @@ import { canTransition } from './transitionTable'
 import { createScene, isSceneRegistered } from './sceneRegistry'
 import type { PlayerIdentity, PlayerPosition } from './Scene'
 import type { RemoteActorData } from '@/engine/world/WorldActor'
+import type { PlotOwnership } from '@/engine/world/PlotSprite'
 
 const COVER_MS = 300
 const REVEAL_MS = 260
@@ -97,6 +98,10 @@ export class SceneManager {
 
   setRemoteActors(actors: RemoteActorData[]): void {
     this.active?.setRemoteActors?.(actors)
+  }
+
+  setFarms(ownerships: PlotOwnership[]): void {
+    this.active?.setFarms?.(ownerships)
   }
 
   getPlayerPosition(): PlayerPosition | null {

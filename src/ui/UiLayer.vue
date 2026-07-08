@@ -12,6 +12,7 @@ import LeaderboardScreen from './screens/LeaderboardScreen.vue'
 import ProfileScreen from './screens/ProfileScreen.vue'
 import QuestsScreen from './screens/QuestsScreen.vue'
 import GuideScreen from './screens/GuideScreen.vue'
+import KandangScreen from './screens/KandangScreen.vue'
 
 const scene = useSceneStore()
 const showLogin = computed(() => scene.current === 'boot' || scene.current === 'login')
@@ -24,6 +25,7 @@ const overlays = {
   profile: ProfileScreen,
   quests: QuestsScreen,
   guide: GuideScreen,
+  kandang: KandangScreen,
 }
 const overlayComponent = computed(() =>
   scene.overlay ? (overlays[scene.overlay as keyof typeof overlays] ?? null) : null,

@@ -4,7 +4,17 @@ import type { Player } from '@/domain/models/player'
 import { statsOf } from '@/domain/stats'
 import { divisionOf } from '@/domain/rating'
 import { applyXp, tierOf, xpForNext } from '@/domain/progression'
-import { trainingCost, trainingXp, vaultConversion } from '@/domain/economy'
+import {
+  calfCost,
+  farmRatePerHour,
+  pendingEarnings,
+  plotPrice,
+  trainingCost,
+  trainingXp,
+  vaultConversion,
+} from '@/domain/economy'
+import { breedOffspring } from '@/domain/breeding'
+import type { Bull } from '@/domain/models/bull'
 import { findGear, type GearId } from '@/domain/config/gear'
 import type { RegisterInput } from '@/services/api/playerApi'
 import * as profileApi from '@/services/api/profileApi'
@@ -116,6 +126,86 @@ export const usePlayerStore = defineStore('player', () => {
     return true
   }
 
+  function buyPlot(index: number): boolean {
+    if (!player.value || player.value.farm.plotIndex != null) {
+      return false
+    }
+    const price = plotPrice()
+    if (player.value.currency.gold < price) {
+      return false
+    }
+    player.value.currency.gold -= price
+    player.value.farm.plotIndex = index
+    player.value.farm.lastClaimAt = Date.now()
+    void save()
+    return true
+  }
+
+  function collectFarm(): number {
+    if (!player.value || player.value.farm.plotIndex == null) {
+      return 0
+    }
+    const ratePerHour = farmRatePerHour(player.value.storedBulls)
+    const elapsedSeconds = (Date.now() - player.value.farm.lastClaimAt) / 1000
+    const earned = pendingEarnings(ratePerHour, elapsedSeconds)
+    if (earned > 0) {
+      player.value.currency.gold += earned
+      player.value.farm.lastClaimAt = Date.now()
+      void save()
+    }
+    return earned
+  }
+
+  function buyCalf(): Bull | null {
+    if (!player.value || player.value.farm.plotIndex == null) {
+      return null
+    }
+    if (player.value.storedBulls.length >= player.value.farm.capacity) {
+      return null
+    }
+    const cost = calfCost()
+    if (player.value.currency.gold < cost) {
+      return null
+    }
+    const calf: Bull = {
+      name: 'Calf',
+      element: player.value.activeBull.element,
+      level: 1,
+      xp: 0,
+      gear: [],
+      traits: [],
+      mythic: false,
+    }
+    player.value.currency.gold -= cost
+    player.value.storedBulls.push(calf)
+    void save()
+    return calf
+  }
+
+  function breed(firstIndex: number, secondIndex: number): Bull | null {
+    if (!player.value || firstIndex === secondIndex) {
+      return null
+    }
+    if (player.value.storedBulls.length >= player.value.farm.capacity) {
+      return null
+    }
+    const roster = [player.value.activeBull, ...player.value.storedBulls]
+    const first = roster[firstIndex]
+    const second = roster[secondIndex]
+    if (!first || !second) {
+      return null
+    }
+    const cost = calfCost()
+    if (player.value.currency.gold < cost) {
+      return null
+    }
+    const calf = breedOffspring(first, second, Math.random)
+    player.value.currency.gold -= cost
+    player.value.storedBulls.push(calf)
+    void save()
+    return calf
+  }
+
   function grantReward(gold: number, token: number): void {
     if (!player.value) {
       return
@@ -197,6 +287,10 @@ export const usePlayerStore = defineStore('player', () => {
     trainBull,
     buyGear,
     convertVault,
+    buyPlot,
+    collectFarm,
+    buyCalf,
+    breed,
     grantReward,
     recordWallet,
     markWalletLinked,

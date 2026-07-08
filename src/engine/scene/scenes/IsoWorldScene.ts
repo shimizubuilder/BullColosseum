@@ -6,7 +6,7 @@ import type { MapDefinition } from '@/domain/maps/mapTypes'
 import { buildBlockedGrid, computePath, type BlockedGrid } from '@/engine/world/pathfinding'
 import { createGroundLayer } from '@/engine/world/GroundLayer'
 import { createBuildingSprite } from '@/engine/world/BuildingSprite'
-import { createPlotSprite } from '@/engine/world/PlotSprite'
+import { createPlotSprite, type PlotOwnership } from '@/engine/world/PlotSprite'
 import { createPortalSprite } from '@/engine/world/PortalSprite'
 import { createPropSprite } from '@/engine/world/PropSprite'
 import { AvatarSprite } from '@/engine/world/AvatarSprite'
@@ -79,6 +79,7 @@ export class IsoWorldScene extends BaseScene {
   private readonly player: PlayerState
   private readonly npcs: WorldActor[] = []
   private readonly remotes = new Map<string, WorldActor>()
+  private readonly plotSprites = new Map<number, Container>()
   private input: WorldInput | null = null
   private inputEnabled = true
   private cameraX = 0
@@ -111,9 +112,10 @@ export class IsoWorldScene extends BaseScene {
       this.entityLayer.addChild(sprite)
     }
     for (const plot of this.map.plots) {
-      const sprite = createPlotSprite(plot)
+      const sprite = createPlotSprite(plot, null)
       sprite.zIndex = plot.x + plot.y
       this.entityLayer.addChild(sprite)
+      this.plotSprites.set(plot.index, sprite)
     }
     for (const portal of this.map.portals) {
       this.entityLayer.addChild(createPortalSprite(portal))
@@ -281,6 +283,21 @@ export class IsoWorldScene extends BaseScene {
         remote.destroy()
         this.remotes.delete(username)
       }
+    }
+  }
+
+  setFarms(ownerships: PlotOwnership[]): void {
+    const byIndex = new Map(ownerships.map((ownership) => [ownership.index, ownership]))
+    for (const plot of this.map.plots) {
+      const previous = this.plotSprites.get(plot.index)
+      if (previous) {
+        this.entityLayer.removeChild(previous)
+        previous.destroy({ children: true })
+      }
+      const sprite = createPlotSprite(plot, byIndex.get(plot.index) ?? null)
+      sprite.zIndex = plot.x + plot.y
+      this.entityLayer.addChild(sprite)
+      this.plotSprites.set(plot.index, sprite)
     }
   }
 

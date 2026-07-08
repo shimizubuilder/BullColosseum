@@ -8,6 +8,7 @@ import { SceneManager } from './scene/SceneManager'
 import type { PlayerIdentity, PlayerPosition, SceneContext } from './scene/Scene'
 import type { SceneId } from './scene/SceneId'
 import type { RemoteActorData } from './world/WorldActor'
+import type { PlotOwnership } from './world/PlotSprite'
 
 export class Engine {
   readonly bus = new EngineBus()
@@ -72,6 +73,10 @@ export class Engine {
 
   setRemoteActors(actors: RemoteActorData[]): void {
     this.manager.setRemoteActors(actors)
+  }
+
+  setFarms(ownerships: PlotOwnership[]): void {
+    this.manager.setFarms(ownerships)
   }
 
   setServerOffset(offsetMs: number): void {

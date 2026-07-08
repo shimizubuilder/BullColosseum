@@ -7,7 +7,9 @@ import { usePlayerStore } from '@/stores/usePlayerStore'
 import { useWorldStore } from '@/stores/useWorldStore'
 import { usePresenceStore } from '@/stores/usePresenceStore'
 import { useSessionStore } from '@/stores/useSessionStore'
+import { useFarmStore } from '@/stores/useFarmStore'
 import * as presenceApi from '@/services/api/presenceApi'
+import type { PlotOwnership } from '@/engine/world/PlotSprite'
 
 const root = useTemplateRef<HTMLDivElement>('root')
 const scene = useSceneStore()
@@ -15,6 +17,7 @@ const player = usePlayerStore()
 const world = useWorldStore()
 const presence = usePresenceStore()
 const session = useSessionStore()
+const farm = useFarmStore()
 
 const HEARTBEAT_INTERVAL_MS = 1300
 
@@ -41,9 +44,23 @@ function identity(): { name: string; avatar: string } {
   return { name: player.player?.account.username ?? 'Player', avatar: player.player?.account.avatar ?? 'ansem' }
 }
 
+function farmOwnerships(): PlotOwnership[] {
+  return Object.entries(farm.farmsByPlot).map(([index, info]) => ({
+    index: Number(index),
+    mine: info.mine,
+    label: info.mine ? `★ ${info.username}` : info.username,
+    bulls: info.bulls,
+  }))
+}
+
 function handleEnter(target: string): void {
   if ((OVERLAY_BUILDINGS as string[]).includes(target)) {
     scene.openOverlay(target as OverlayId)
+    return
+  }
+  if (target.startsWith('plot:')) {
+    farm.selectPlot(Number(target.slice(5)))
+    scene.openOverlay('kandang')
     return
   }
   if (target === 'portal:farm') {
@@ -146,7 +163,12 @@ onMounted(async () => {
         engine?.setPlayerIdentity(identity())
       }
     }),
-    engine.bus.on('transition:end', () => scene.setTransitioning(false)),
+    engine.bus.on('transition:end', ({ to }) => {
+      scene.setTransitioning(false)
+      if (to === 'farm') {
+        engine?.setFarms(farmOwnerships())
+      }
+    }),
     engine.bus.on('world:prompt', ({ text }) => world.setPrompt(text)),
     engine.bus.on('world:enter', ({ target }) => handleEnter(target)),
     watch(
@@ -161,7 +183,15 @@ onMounted(async () => {
         } else {
           stopHeartbeat()
         }
+        if (id === 'farm') {
+          void farm.load()
+        }
       },
+    ),
+    watch(
+      () => farm.farmsByPlot,
+      () => engine?.setFarms(farmOwnerships()),
+      { deep: true },
     ),
     watch(
       () => scene.overlay,

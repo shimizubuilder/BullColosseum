@@ -5,6 +5,7 @@ import type { EngineBus } from '@/engine/core/EngineBus'
 import type { Camera } from '@/engine/core/Camera'
 import type { AssetRegistry } from '@/engine/assets/AssetRegistry'
 import type { RemoteActorData } from '@/engine/world/WorldActor'
+import type { PlotOwnership } from '@/engine/world/PlotSprite'
 
 export interface PlayerIdentity {
   name: string
@@ -38,6 +39,7 @@ export interface Scene {
   setInputEnabled?(enabled: boolean): void
   setPlayerIdentity?(identity: PlayerIdentity): void
   setRemoteActors?(actors: RemoteActorData[]): void
+  setFarms?(ownerships: PlotOwnership[]): void
   getPlayerPosition?(): PlayerPosition
   getAmbientCount?(): number
   destroy(): void
