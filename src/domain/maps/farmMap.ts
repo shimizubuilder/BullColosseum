@@ -1,4 +1,4 @@
-import type { MapDefinition, PlotDef, PortalDef, PropDef, PropKind } from './mapTypes'
+import type { MapDefinition, PathDef, PlotDef, PortalDef, PropDef, PropKind } from './mapTypes'
 
 const PLOT_COLUMNS = 5
 const PLOT_ROWS = 4
@@ -62,6 +62,11 @@ const PLOTS = buildPlots()
 
 const PORTALS: PortalDef[] = [{ target: 'main', x: 1300, y: 1900, size: 88, label: 'MAIN PORTAL' }]
 
+const LANES: PathDef[] = [
+  { points: [{ x: 1300, y: 1900 }, { x: 1300, y: 200 }], width: 120 },
+  { points: [{ x: 200, y: 1090 }, { x: 2400, y: 1090 }], width: 100 },
+]
+
 export const FARM_MAP: MapDefinition = {
   width: 2600,
   height: 2000,
@@ -71,4 +76,5 @@ export const FARM_MAP: MapDefinition = {
   plots: PLOTS,
   portals: PORTALS,
   props: scatterProps(2600, 2000, 26, PLOTS),
+  paths: LANES,
 }

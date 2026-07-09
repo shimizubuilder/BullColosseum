@@ -13,6 +13,18 @@ export const SPRITE_KEYS = [
   'prop.rock',
   'prop.bush',
   'prop.hay',
+  'tile.grass',
+  'tile.grass_alt',
+  'tile.road',
+  'tile.plaza',
+  'tile.sand',
+  'tile.farm_soil',
+  'bull.fire',
+  'bull.bolt',
+  'bull.shadow',
+  'duel.stands',
+  'duel.sand',
+  'duel.gate',
 ] as const
 
 export type SpriteKey = (typeof SPRITE_KEYS)[number]

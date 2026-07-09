@@ -15,6 +15,18 @@ const KNOWN_KEYS = new Set([
   'prop.rock',
   'prop.bush',
   'prop.hay',
+  'tile.grass',
+  'tile.grass_alt',
+  'tile.road',
+  'tile.plaza',
+  'tile.sand',
+  'tile.farm_soil',
+  'bull.fire',
+  'bull.bolt',
+  'bull.shadow',
+  'duel.stands',
+  'duel.sand',
+  'duel.gate',
 ])
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')

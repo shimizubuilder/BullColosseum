@@ -97,7 +97,7 @@ export class IsoWorldScene extends BaseScene {
     this.grid = buildBlockedGrid(solidFootprints(this.structures), config.map.width, config.map.height)
     this.player = { x: this.map.spawn.x, y: this.map.spawn.y, facing: 1, phase: 0, path: null, pathIndex: 0 }
 
-    this.worldLayer.addChild(createGroundLayer(this.map.width, this.map.height, this.map.ground))
+    this.worldLayer.addChild(createGroundLayer(this.map, context.assets))
     this.entityLayer.sortableChildren = true
     this.worldLayer.addChild(this.entityLayer)
     this.root.addChild(this.environment.background)

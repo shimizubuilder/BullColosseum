@@ -39,6 +39,19 @@ export interface PlotDef {
 
 export type GroundStyle = 'grass' | 'farm'
 
+export interface PathDef {
+  points: { x: number; y: number }[]
+  width: number
+}
+
+export interface RingDef {
+  cx: number
+  cy: number
+  rx: number
+  ry: number
+  band: number
+}
+
 export interface MapDefinition {
   width: number
   height: number
@@ -48,4 +61,6 @@ export interface MapDefinition {
   plots: PlotDef[]
   portals: PortalDef[]
   props: PropDef[]
+  paths?: PathDef[]
+  ring?: RingDef
 }

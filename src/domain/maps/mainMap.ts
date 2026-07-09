@@ -1,4 +1,4 @@
-import type { BuildingDef, MapDefinition, PortalDef, PropDef, PropKind } from './mapTypes'
+import type { BuildingDef, MapDefinition, PathDef, PortalDef, PropDef, PropKind, RingDef } from './mapTypes'
 
 const BUILDINGS: BuildingDef[] = [
   { key: 'colosseum', x: 1500, y: 950, width: 440, depth: 330, height: 82, color: '#7a6047', roof: '#a07a52', icon: '⚔', label: 'COLOSSEUM' },
@@ -10,6 +10,20 @@ const BUILDINGS: BuildingDef[] = [
 ]
 
 const PORTALS: PortalDef[] = [{ target: 'farm', x: 2150, y: 1950, size: 88, label: 'FARM ISLAND' }]
+
+const COLOSSEUM = { x: 1500, y: 950 }
+
+const RING: RingDef = { cx: COLOSSEUM.x, cy: COLOSSEUM.y, rx: 320, ry: 250, band: 110 }
+
+const SPOKES: PathDef[] = [
+  { points: [{ x: 1500, y: 1950 }, COLOSSEUM], width: 130 },
+  { points: [{ x: 620, y: 720 }, COLOSSEUM], width: 100 },
+  { points: [{ x: 2380, y: 740 }, COLOSSEUM], width: 100 },
+  { points: [{ x: 700, y: 1500 }, COLOSSEUM], width: 100 },
+  { points: [{ x: 2320, y: 1500 }, COLOSSEUM], width: 100 },
+  { points: [{ x: 960, y: 1900 }, COLOSSEUM], width: 100 },
+  { points: [{ x: 2150, y: 1950 }, COLOSSEUM], width: 100 },
+]
 
 const PROP_KINDS: PropKind[] = ['tree', 'tree', 'rock', 'bush', 'tree']
 
@@ -51,4 +65,6 @@ export const MAIN_MAP: MapDefinition = {
   plots: [],
   portals: PORTALS,
   props: scatterProps(3000, 2200, 44, BUILDINGS),
+  paths: SPOKES,
+  ring: RING,
 }
