@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "sprites": [
+    { "key": "building.colosseum", "src": "assets/sprites/building.colosseum.png" },
+    { "key": "building.stable", "src": "assets/sprites/building.stable.png" },
+    { "key": "building.shop", "src": "assets/sprites/building.shop.png" },
+    { "key": "building.vault", "src": "assets/sprites/building.vault.png" },
+    { "key": "building.leaderboard", "src": "assets/sprites/building.leaderboard.png" },
+    { "key": "building.quests", "src": "assets/sprites/building.quests.png" },
+    { "key": "portal.farm", "src": "assets/sprites/portal.farm.png", "screenWidth": 130 },
+    { "key": "portal.main", "src": "assets/sprites/portal.main.png", "screenWidth": 130 },
+    { "key": "prop.tree", "src": "assets/sprites/prop.tree.png", "screenWidth": 120 },
+    { "key": "prop.rock", "src": "assets/sprites/prop.rock.png", "screenWidth": 70 },
+    { "key": "prop.bush", "src": "assets/sprites/prop.bush.png", "screenWidth": 60 },
+    { "key": "prop.hay", "src": "assets/sprites/prop.hay.png", "screenWidth": 72 },
+    { "key": "tile.grass", "src": "assets/sprites/tile.grass.png" },
+    { "key": "tile.grass_alt", "src": "assets/sprites/tile.grass_alt.png" },
+    { "key": "tile.road", "src": "assets/sprites/tile.road.png" },
+    { "key": "tile.plaza", "src": "assets/sprites/tile.plaza.png" },
+    { "key": "tile.farm_soil", "src": "assets/sprites/tile.farm_soil.png" },
+    { "key": "bull.fire", "src": "assets/sprites/bull.fire.png" },
+    { "key": "bull.bolt", "src": "assets/sprites/bull.bolt.png" },
+    { "key": "bull.shadow", "src": "assets/sprites/bull.shadow.png" },
+    { "key": "duel.stands", "src": "assets/sprites/duel.stands.png" },
+    { "key": "duel.sand", "src": "assets/sprites/duel.sand.png" }
+  ]
+}
