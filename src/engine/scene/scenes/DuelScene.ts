@@ -1,4 +1,4 @@
-import { Container, Graphics, Text } from 'pixi.js'
+import { Container, Graphics, Text, TilingSprite } from 'pixi.js'
 import { BaseScene, type SceneContext } from '@/engine/scene/Scene'
 import { lerp } from '@/domain/math'
 import { ELEMENTS } from '@/domain/config/elements'
@@ -29,8 +29,11 @@ export class DuelScene extends BaseScene {
   readonly id = 'duel' as const
 
   private readonly stage = new Container()
+  private readonly backdrop = new Container()
   private readonly arena = new Graphics()
   private readonly hud = new Graphics()
+  private hasStands = false
+  private hasSand = false
   private readonly banner: Text
   private readonly meName: Text
   private readonly foeName: Text
@@ -68,9 +71,10 @@ export class DuelScene extends BaseScene {
     this.foe = setup?.foe ?? fallbackFighter('Rival')
     this.director = new DuelDirector(this.me, this.foe, Math.random, setup?.spectate ?? false)
 
+    this.stage.addChild(this.backdrop)
     this.stage.addChild(this.arena)
-    this.meBull = new BullSprite(ELEMENTS[this.me.element].primaryColor, 1)
-    this.foeBull = new BullSprite(ELEMENTS[this.foe.element].primaryColor, -1)
+    this.meBull = new BullSprite(context.assets, this.me.element, ELEMENTS[this.me.element].primaryColor, 1)
+    this.foeBull = new BullSprite(context.assets, this.foe.element, ELEMENTS[this.foe.element].primaryColor, -1)
     this.stage.addChild(this.foeBull.container)
     this.stage.addChild(this.meBull.container)
     this.stage.addChild(this.hud)
@@ -96,6 +100,7 @@ export class DuelScene extends BaseScene {
     this.stage.addChild(this.foeName)
     this.stage.addChild(this.banner)
 
+    this.buildBackdrop()
     this.drawArena()
     this.root.addChild(this.stage)
   }
@@ -119,8 +124,8 @@ export class DuelScene extends BaseScene {
     this.me = setup.me
     this.foe = setup.foe
     this.director = new DuelDirector(this.me, this.foe, Math.random, setup.spectate)
-    this.meBull.setColor(ELEMENTS[this.me.element].primaryColor)
-    this.foeBull.setColor(ELEMENTS[this.foe.element].primaryColor)
+    this.meBull.setElement(this.me.element, ELEMENTS[this.me.element].primaryColor)
+    this.foeBull.setElement(this.foe.element, ELEMENTS[this.foe.element].primaryColor)
     this.meName.text = `▸ ${this.me.name}`
     this.foeName.text = `${this.foe.name} ◂`
     this.meX = OUT_LEFT
@@ -186,11 +191,38 @@ export class DuelScene extends BaseScene {
     this.banner.text = this.bannerTimer > 0 ? snapshot.banner : ''
   }
 
+  private buildBackdrop(): void {
+    const stands = this.context.assets?.sprite('duel.stands') ?? null
+    const sand = this.context.assets?.sprite('duel.sand') ?? null
+    this.hasStands = stands !== null
+    this.hasSand = sand !== null
+    const skyHeight = 360
+    if (stands) {
+      const tile = new TilingSprite({ texture: stands.texture, width: VIRTUAL_WIDTH, height: skyHeight })
+      tile.tileScale.set(skyHeight / stands.texture.height)
+      this.backdrop.addChild(tile)
+    }
+    if (sand) {
+      const floorHeight = VIRTUAL_HEIGHT - skyHeight
+      const base = new Graphics()
+      base.rect(0, skyHeight, VIRTUAL_WIDTH, floorHeight).fill(0xbf9a63)
+      this.backdrop.addChild(base)
+      const tile = new TilingSprite({ texture: sand.texture, width: VIRTUAL_WIDTH, height: floorHeight })
+      tile.position.set(0, skyHeight)
+      tile.tileScale.set(floorHeight / sand.texture.height)
+      this.backdrop.addChild(tile)
+    }
+  }
+
   private drawArena(): void {
     this.arena.clear()
-    this.arena.rect(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT).fill(0x160d22)
-    this.arena.rect(0, 300, VIRTUAL_WIDTH, 60).fill(0x0d0a16)
-    this.arena.rect(0, 360, VIRTUAL_WIDTH, VIRTUAL_HEIGHT - 360).fill(0x2f2218)
+    if (!this.hasStands) {
+      this.arena.rect(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT).fill(0x160d22)
+      this.arena.rect(0, 300, VIRTUAL_WIDTH, 60).fill(0x0d0a16)
+    }
+    if (!this.hasSand) {
+      this.arena.rect(0, 360, VIRTUAL_WIDTH, VIRTUAL_HEIGHT - 360).fill(0x2f2218)
+    }
     for (const [x, direction] of [
       [OUT_LEFT, -1],
       [OUT_RIGHT, 1],
