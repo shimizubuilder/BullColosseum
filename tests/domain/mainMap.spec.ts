@@ -8,7 +8,7 @@ describe('MAIN_MAP', () => {
   })
 
   it('scatters the requested number of props deterministically', () => {
-    expect(MAIN_MAP.props).toHaveLength(44)
+    expect(MAIN_MAP.props).toHaveLength(72)
     expect(MAIN_MAP.props[0]).toEqual(MAIN_MAP.props[0])
   })
 

@@ -2,7 +2,7 @@ import { Container, Graphics, Sprite } from 'pixi.js'
 import { ISO, worldToIso } from '@/engine/iso/isoMath'
 import type { AssetRegistry } from '@/engine/assets/AssetRegistry'
 import type { SpriteKey } from '@/engine/assets/assetManifest'
-import type { GroundStyle, MapDefinition, PathDef, RingDef } from '@/domain/maps/mapTypes'
+import type { GroundStyle, MapDefinition, PathDef, PlazaDef } from '@/domain/maps/mapTypes'
 
 const TILE = 100
 
@@ -10,8 +10,8 @@ const PALETTE: Record<GroundStyle, [number, number]> = {
   grass: [0x4b8f47, 0x42883f],
   farm: [0x7a8f43, 0x6b823a],
 }
-const ROAD_COLOR = 0xb08a5a
-const PLAZA_COLOR = 0xcdb489
+export const ROAD_COLOR = 0xb08a5a
+export const PLAZA_COLOR = 0xcdb489
 
 type Surface = 'base' | 'base_alt' | 'road' | 'plaza'
 
@@ -42,12 +42,8 @@ function onPath(x: number, y: number, paths: PathDef[]): boolean {
   return false
 }
 
-function onRing(x: number, y: number, ring: RingDef): boolean {
-  const normalizedX = (x - ring.cx) / ring.rx
-  const normalizedY = (y - ring.cy) / ring.ry
-  const radius = Math.hypot(normalizedX, normalizedY)
-  const tolerance = ring.band / 2 / ((ring.rx + ring.ry) / 2)
-  return Math.abs(radius - 1) <= tolerance
+function onPlaza(x: number, y: number, plazas: PlazaDef[]): boolean {
+  return plazas.some((plaza) => Math.abs(x - plaza.x) <= plaza.width / 2 && Math.abs(y - plaza.y) <= plaza.depth / 2)
 }
 
 function variantHash(x: number, y: number): number {
@@ -57,7 +53,7 @@ function variantHash(x: number, y: number): number {
 }
 
 function surfaceAt(centerX: number, centerY: number, map: MapDefinition): Surface {
-  if (map.ring && onRing(centerX, centerY, map.ring)) {
+  if (map.plazas && onPlaza(centerX, centerY, map.plazas)) {
     return 'plaza'
   }
   if (map.paths && onPath(centerX, centerY, map.paths)) {

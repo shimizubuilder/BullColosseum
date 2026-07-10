@@ -1,4 +1,4 @@
-import type { BuildingDef, MapDefinition, PathDef, PortalDef, PropDef, PropKind, RingDef } from './mapTypes'
+import type { BuildingDef, MapDefinition, PathDef, PlazaDef, PortalDef, PropDef, PropKind } from './mapTypes'
 
 const BUILDINGS: BuildingDef[] = [
   { key: 'colosseum', x: 1500, y: 950, width: 440, depth: 330, height: 82, color: '#7a6047', roof: '#a07a52', icon: '⚔', label: 'COLOSSEUM' },
@@ -11,18 +11,28 @@ const BUILDINGS: BuildingDef[] = [
 
 const PORTALS: PortalDef[] = [{ target: 'farm', x: 2150, y: 1950, size: 88, label: 'FARM ISLAND' }]
 
-const COLOSSEUM = { x: 1500, y: 950 }
+const PLAZAS: PlazaDef[] = [{ x: 1500, y: 1050, width: 600, depth: 700 }]
 
-const RING: RingDef = { cx: COLOSSEUM.x, cy: COLOSSEUM.y, rx: 320, ry: 250, band: 110 }
+const STREET_WIDTH = 200
 
-const SPOKES: PathDef[] = [
-  { points: [{ x: 1500, y: 1950 }, COLOSSEUM], width: 130 },
-  { points: [{ x: 620, y: 720 }, COLOSSEUM], width: 100 },
-  { points: [{ x: 2380, y: 740 }, COLOSSEUM], width: 100 },
-  { points: [{ x: 700, y: 1500 }, COLOSSEUM], width: 100 },
-  { points: [{ x: 2320, y: 1500 }, COLOSSEUM], width: 100 },
-  { points: [{ x: 960, y: 1900 }, COLOSSEUM], width: 100 },
-  { points: [{ x: 2150, y: 1950 }, COLOSSEUM], width: 100 },
+const STREETS: PathDef[] = [
+  { points: [{ x: 700, y: 900 }, { x: 700, y: 1300 }], width: STREET_WIDTH },
+  { points: [{ x: 2300, y: 900 }, { x: 2300, y: 1300 }], width: STREET_WIDTH },
+  { points: [{ x: 700, y: 1300 }, { x: 2300, y: 1300 }], width: STREET_WIDTH },
+  { points: [{ x: 1500, y: 1400 }, { x: 1500, y: 2000 }], width: STREET_WIDTH },
+  { points: [{ x: 700, y: 2000 }, { x: 2300, y: 2000 }], width: STREET_WIDTH },
+  { points: [{ x: 700, y: 1700 }, { x: 700, y: 2000 }], width: STREET_WIDTH },
+  { points: [{ x: 2300, y: 1700 }, { x: 2300, y: 2000 }], width: STREET_WIDTH },
+  {
+    points: [
+      { x: 2100, y: 1300 },
+      { x: 2500, y: 1300 },
+      { x: 2500, y: 1700 },
+      { x: 2100, y: 1700 },
+      { x: 2100, y: 1300 },
+    ],
+    width: STREET_WIDTH,
+  },
 ]
 
 const PROP_KINDS: PropKind[] = ['tree', 'tree', 'rock', 'bush', 'tree']
@@ -37,6 +47,30 @@ function seededRandom(seed: number): () => number {
   }
 }
 
+function distanceToSegment(px: number, py: number, ax: number, ay: number, bx: number, by: number): number {
+  const dx = bx - ax
+  const dy = by - ay
+  const lengthSquared = dx * dx + dy * dy
+  let t = lengthSquared === 0 ? 0 : ((px - ax) * dx + (py - ay) * dy) / lengthSquared
+  t = Math.max(0, Math.min(1, t))
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy))
+}
+
+function onStreet(x: number, y: number, streets: PathDef[], margin: number): boolean {
+  return streets.some((street) =>
+    street.points.some((point, index) => {
+      const next = street.points[index + 1]
+      return next !== undefined && distanceToSegment(x, y, point.x, point.y, next.x, next.y) < street.width / 2 + margin
+    }),
+  )
+}
+
+function onPlazaArea(x: number, y: number, plazas: PlazaDef[], margin: number): boolean {
+  return plazas.some(
+    (plaza) => Math.abs(x - plaza.x) < plaza.width / 2 + margin && Math.abs(y - plaza.y) < plaza.depth / 2 + margin,
+  )
+}
+
 function scatterProps(width: number, height: number, count: number, buildings: BuildingDef[]): PropDef[] {
   const random = seededRandom(0x51a17)
   const props: PropDef[] = []
@@ -45,10 +79,13 @@ function scatterProps(width: number, height: number, count: number, buildings: B
     let y = 0
     let clear = false
     let attempts = 0
-    while (!clear && attempts < 40) {
+    while (!clear && attempts < 60) {
       x = 120 + random() * (width - 240)
       y = 120 + random() * (height - 240)
-      clear = buildings.every((b) => Math.abs(x - b.x) >= b.width / 2 + 70 || Math.abs(y - b.y) >= b.depth / 2 + 70)
+      clear =
+        buildings.every((b) => Math.abs(x - b.x) >= b.width / 2 + 70 || Math.abs(y - b.y) >= b.depth / 2 + 70) &&
+        !onStreet(x, y, STREETS, 40) &&
+        !onPlazaArea(x, y, PLAZAS, 40)
       attempts += 1
     }
     props.push({ x, y, kind: PROP_KINDS[(index * 7) % PROP_KINDS.length] })
@@ -64,7 +101,7 @@ export const MAIN_MAP: MapDefinition = {
   buildings: BUILDINGS,
   plots: [],
   portals: PORTALS,
-  props: scatterProps(3000, 2200, 44, BUILDINGS),
-  paths: SPOKES,
-  ring: RING,
+  props: scatterProps(3000, 2200, 72, BUILDINGS),
+  paths: STREETS,
+  plazas: PLAZAS,
 }

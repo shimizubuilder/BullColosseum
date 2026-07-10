@@ -44,12 +44,11 @@ export interface PathDef {
   width: number
 }
 
-export interface RingDef {
-  cx: number
-  cy: number
-  rx: number
-  ry: number
-  band: number
+export interface PlazaDef {
+  x: number
+  y: number
+  width: number
+  depth: number
 }
 
 export interface MapDefinition {
@@ -62,5 +61,5 @@ export interface MapDefinition {
   portals: PortalDef[]
   props: PropDef[]
   paths?: PathDef[]
-  ring?: RingDef
+  plazas?: PlazaDef[]
 }

@@ -63,8 +63,8 @@ const PLOTS = buildPlots()
 const PORTALS: PortalDef[] = [{ target: 'main', x: 1300, y: 1900, size: 88, label: 'MAIN PORTAL' }]
 
 const LANES: PathDef[] = [
-  { points: [{ x: 1300, y: 1900 }, { x: 1300, y: 200 }], width: 120 },
-  { points: [{ x: 200, y: 1090 }, { x: 2400, y: 1090 }], width: 100 },
+  { points: [{ x: 1300, y: 2000 }, { x: 1300, y: 200 }], width: 200 },
+  { points: [{ x: 200, y: 1100 }, { x: 2400, y: 1100 }], width: 200 },
 ]
 
 export const FARM_MAP: MapDefinition = {
@@ -75,6 +75,6 @@ export const FARM_MAP: MapDefinition = {
   buildings: [],
   plots: PLOTS,
   portals: PORTALS,
-  props: scatterProps(2600, 2000, 26, PLOTS),
+  props: scatterProps(2600, 2000, 34, PLOTS),
   paths: LANES,
 }

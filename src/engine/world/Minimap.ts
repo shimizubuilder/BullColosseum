@@ -1,5 +1,7 @@
 import { Container, Graphics, Text } from 'pixi.js'
 import type { MapDefinition } from '@/domain/maps/mapTypes'
+import { DISPLAY_FONT } from '@/engine/ui/textStyles'
+import { PLAZA_COLOR, ROAD_COLOR } from './GroundLayer'
 
 export class Minimap {
   readonly container = new Container()
@@ -25,6 +27,29 @@ export class Minimap {
       .stroke({ width: 1, color: 0x2a2036 })
     this.container.addChild(background)
 
+    const ground = new Graphics()
+    for (const path of map.paths ?? []) {
+      for (let index = 0; index < path.points.length - 1; index += 1) {
+        const from = path.points[index]
+        const to = path.points[index + 1]
+        ground
+          .moveTo(this.originX + from.x * this.scale, this.originY + from.y * this.scale)
+          .lineTo(this.originX + to.x * this.scale, this.originY + to.y * this.scale)
+          .stroke({ width: Math.max(1.5, path.width * this.scale), color: ROAD_COLOR, alpha: 0.55 })
+      }
+    }
+    for (const plaza of map.plazas ?? []) {
+      ground
+        .rect(
+          this.originX + (plaza.x - plaza.width / 2) * this.scale,
+          this.originY + (plaza.y - plaza.depth / 2) * this.scale,
+          plaza.width * this.scale,
+          plaza.depth * this.scale,
+        )
+        .fill({ color: PLAZA_COLOR, alpha: 0.5 })
+    }
+    this.container.addChild(ground)
+
     const structures = new Graphics()
     for (const building of map.buildings) {
       const w = Math.max(2, building.width * this.scale)
@@ -42,7 +67,7 @@ export class Minimap {
     this.container.addChild(structures)
     this.container.addChild(this.marker)
 
-    const label = new Text({ text: this.title, style: { fontFamily: 'Segoe UI, sans-serif', fontSize: 9, fill: 0xe8e0f5 } })
+    const label = new Text({ text: this.title, style: { fontFamily: DISPLAY_FONT, fontSize: 9, fill: 0xe8e0f5 } })
     label.position.set(6, 3)
     this.container.addChild(label)
   }
