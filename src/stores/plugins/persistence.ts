@@ -34,4 +34,15 @@ export function setupPersistence(storage: KeyValueStore = browserStorage()): voi
     },
     { deep: true },
   )
+
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        coordinator.flush()
+      }
+    })
+  }
+  if (typeof window !== 'undefined') {
+    window.addEventListener('pagehide', () => coordinator.flush())
+  }
 }

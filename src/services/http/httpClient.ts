@@ -8,6 +8,7 @@ function resolveApiBase(): string | null {
 }
 
 const API_BASE = resolveApiBase()
+const REQUEST_TIMEOUT_MS = 8000
 
 function isDbUnavailable(body: unknown): boolean {
   return typeof body === 'object' && body !== null && (body as { error?: unknown }).error === 'db_unavailable'
@@ -17,8 +18,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<NetworkResu
   if (API_BASE === null) {
     return { status: 'offline' }
   }
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
   try {
-    const response = await fetch(`${API_BASE}/${path}`, init)
+    const response = await fetch(`${API_BASE}/${path}`, { ...init, signal: controller.signal })
     const body = await response.json()
     if (isDbUnavailable(body)) {
       return { status: 'offline' }
@@ -29,6 +32,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<NetworkResu
     return { status: 'ok', data: body as T, source: 'server' }
   } catch {
     return { status: 'offline' }
+  } finally {
+    clearTimeout(timeout)
   }
 }
 

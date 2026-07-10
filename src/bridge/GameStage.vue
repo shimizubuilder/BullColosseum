@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { Engine } from '@/engine/Engine'
 import type { SceneId as EngineSceneId } from '@/engine/scene/SceneId'
 import { useSceneStore, type OverlayId, type SceneId as UiSceneId } from '@/stores/useSceneStore'
@@ -9,6 +9,7 @@ import { usePresenceStore } from '@/stores/usePresenceStore'
 import { useSessionStore } from '@/stores/useSessionStore'
 import { useFarmStore } from '@/stores/useFarmStore'
 import { useDuelStore, type DuelIntent } from '@/stores/useDuelStore'
+import { useControlsStore } from '@/stores/useControlsStore'
 import { useKingStore } from '@/stores/useKingStore'
 import { useSpectateStore } from '@/stores/useSpectateStore'
 import { useLeaderboardStore } from '@/stores/useLeaderboardStore'
@@ -30,15 +31,20 @@ const presence = usePresenceStore()
 const session = useSessionStore()
 const farm = useFarmStore()
 const duel = useDuelStore()
+const controls = useControlsStore()
 const king = useKingStore()
 const spectate = useSpectateStore()
 const leaderboard = useLeaderboardStore()
 const quest = useQuestStore()
 
 const HEARTBEAT_INTERVAL_MS = 1300
+const RECONNECT_EVERY = 5
+
+const bootFailed = ref(false)
 
 let engine: Engine | null = null
 let disposed = false
+let reconnectSkips = 0
 let stops: (() => void)[] = []
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null
 let heartbeatInFlight = false
@@ -58,6 +64,10 @@ function toEngineScene(id: UiSceneId): EngineSceneId | null {
   return SCENE_MAP[id] ?? null
 }
 
+function reload(): void {
+  window.location.reload()
+}
+
 function identity(): { name: string; avatar: string } {
   return { name: player.player?.account.username ?? 'Player', avatar: player.player?.account.avatar ?? 'ansem' }
 }
@@ -66,7 +76,7 @@ function farmOwnerships(): PlotOwnership[] {
   return Object.entries(farm.farmsByPlot).map(([index, info]) => ({
     index: Number(index),
     mine: info.mine,
-    label: info.mine ? `★ ${info.username}` : info.username,
+    label: info.username,
     bulls: info.bulls,
   }))
 }
@@ -279,7 +289,11 @@ async function heartbeat(): Promise<void> {
     activeEngine.setRemoteActors([])
     presence.setRemotePlayers([])
     presence.setOnlineCount(1 + ambient)
-    return
+    reconnectSkips += 1
+    if (reconnectSkips < RECONNECT_EVERY) {
+      return
+    }
+    reconnectSkips = 0
   }
   heartbeatInFlight = true
   try {
@@ -295,6 +309,9 @@ async function heartbeat(): Promise<void> {
       return
     }
     if (result.status === 'ok' && result.data.ok) {
+      if (!session.online) {
+        session.setOnline(true)
+      }
       const others = (result.data.players ?? []).filter((remote) => remote.username !== self.name)
       activeEngine.setRemoteActors(others)
       presence.setRemotePlayers(others)
@@ -337,7 +354,19 @@ onMounted(async () => {
     return
   }
 
-  const created = await Engine.create()
+  await Promise.race([
+    document.fonts.load('700 16px Cinzel'),
+    new Promise((resolve) => setTimeout(resolve, 2000)),
+  ])
+
+  let created: Engine
+  try {
+    created = await Engine.create()
+  } catch (error) {
+    console.error('[GameStage] failed to initialize engine', error)
+    bootFailed.value = true
+    return
+  }
   if (disposed) {
     created.destroy()
     return
@@ -400,9 +429,23 @@ onMounted(async () => {
       () => scene.overlay,
       (overlay) => engine?.setInputEnabled(overlay === null),
     ),
+    watch(
+      () => [controls.moveX, controls.moveY] as const,
+      ([x, y]) => engine?.setMoveAxis(x, y),
+    ),
+    watch(
+      () => controls.interactSeq,
+      () => engine?.interact(),
+    ),
   ]
 
-  engine.start(toEngineScene(scene.current) ?? 'boot')
+  try {
+    await engine.start(toEngineScene(scene.current) ?? 'boot')
+  } catch (error) {
+    console.error('[GameStage] failed to start initial scene', error)
+    bootFailed.value = true
+    return
+  }
   if (scene.current === 'world' || scene.current === 'farm') {
     startHeartbeat()
     void king.refresh(identity().name)
@@ -422,6 +465,10 @@ onBeforeUnmount(() => {
 
 <template>
   <div ref="root" class="game-stage" />
+  <div v-if="bootFailed" class="game-error">
+    <p>The arena failed to load.</p>
+    <button type="button" @click="reload">Reload</button>
+  </div>
 </template>
 
 <style scoped>
@@ -429,5 +476,30 @@ onBeforeUnmount(() => {
   position: fixed;
   inset: 0;
   z-index: 0;
+}
+
+.game-error {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+.game-error button {
+  padding: 0.6rem 1.4rem;
+  border: 1px solid var(--color-accent);
+  border-radius: 10px;
+  background: rgba(229, 72, 77, 0.14);
+  color: var(--color-text);
+  font-weight: 700;
+  cursor: pointer;
 }
 </style>

@@ -47,8 +47,8 @@ export class Engine {
     this.gameApp.mount(container)
   }
 
-  start(initial: SceneId): void {
-    this.manager.setImmediate(initial)
+  async start(initial: SceneId): Promise<void> {
+    await this.manager.setImmediate(initial)
     const handler = (ticker: Ticker): void => {
       const deltaMs = ticker.deltaMS
       this.manager.advance(deltaMs)
@@ -67,6 +67,14 @@ export class Engine {
 
   setInputEnabled(enabled: boolean): void {
     this.manager.setInputEnabled(enabled)
+  }
+
+  setMoveAxis(x: number, y: number): void {
+    this.manager.setMoveAxis(x, y)
+  }
+
+  interact(): void {
+    this.manager.interact()
   }
 
   setPlayerIdentity(identity: PlayerIdentity): void {

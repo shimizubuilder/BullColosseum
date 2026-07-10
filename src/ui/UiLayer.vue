@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, defineAsyncComponent } from 'vue'
 import { useSceneStore } from '@/stores/useSceneStore'
 import { useDuelStore } from '@/stores/useDuelStore'
 import { useSpectateStore } from '@/stores/useSpectateStore'
@@ -7,18 +7,9 @@ import LoginScreen from './screens/LoginScreen.vue'
 import WorldHud from './hud/WorldHud.vue'
 import WorldPrompt from './hud/WorldPrompt.vue'
 import ChatPanel from './hud/ChatPanel.vue'
+import TouchControls from './hud/TouchControls.vue'
+import DuelHint from './hud/DuelHint.vue'
 import SpectateHud from './hud/SpectateHud.vue'
-import StableScreen from './screens/StableScreen.vue'
-import ShopScreen from './screens/ShopScreen.vue'
-import VaultScreen from './screens/VaultScreen.vue'
-import LeaderboardScreen from './screens/LeaderboardScreen.vue'
-import ProfileScreen from './screens/ProfileScreen.vue'
-import QuestsScreen from './screens/QuestsScreen.vue'
-import GuideScreen from './screens/GuideScreen.vue'
-import PenScreen from './screens/PenScreen.vue'
-import ArenaLobbyScreen from './screens/ArenaLobbyScreen.vue'
-import KingScreen from './screens/KingScreen.vue'
-import TournamentScreen from './screens/TournamentScreen.vue'
 import ResultCard from './hud/ResultCard.vue'
 
 const scene = useSceneStore()
@@ -29,17 +20,17 @@ const showWorld = computed(() => scene.current === 'world' || scene.current === 
 const showSpectate = computed(() => scene.current === 'duel' && duel.context === 'spectate' && spectate.active)
 
 const overlays = {
-  stable: StableScreen,
-  shop: ShopScreen,
-  vault: VaultScreen,
-  leaderboard: LeaderboardScreen,
-  profile: ProfileScreen,
-  quests: QuestsScreen,
-  guide: GuideScreen,
-  pen: PenScreen,
-  colosseum: ArenaLobbyScreen,
-  king: KingScreen,
-  tournament: TournamentScreen,
+  stable: defineAsyncComponent(() => import('./screens/StableScreen.vue')),
+  shop: defineAsyncComponent(() => import('./screens/ShopScreen.vue')),
+  vault: defineAsyncComponent(() => import('./screens/VaultScreen.vue')),
+  leaderboard: defineAsyncComponent(() => import('./screens/LeaderboardScreen.vue')),
+  profile: defineAsyncComponent(() => import('./screens/ProfileScreen.vue')),
+  quests: defineAsyncComponent(() => import('./screens/QuestsScreen.vue')),
+  guide: defineAsyncComponent(() => import('./screens/GuideScreen.vue')),
+  pen: defineAsyncComponent(() => import('./screens/PenScreen.vue')),
+  colosseum: defineAsyncComponent(() => import('./screens/ArenaLobbyScreen.vue')),
+  king: defineAsyncComponent(() => import('./screens/KingScreen.vue')),
+  tournament: defineAsyncComponent(() => import('./screens/TournamentScreen.vue')),
 }
 const overlayComponent = computed(() =>
   scene.overlay ? (overlays[scene.overlay as keyof typeof overlays] ?? null) : null,
@@ -53,8 +44,10 @@ const overlayComponent = computed(() =>
       <WorldHud />
       <WorldPrompt />
       <ChatPanel />
+      <TouchControls />
       <component :is="overlayComponent" v-if="overlayComponent" />
     </template>
+    <DuelHint v-if="scene.current === 'duel'" />
     <SpectateHud v-if="showSpectate" />
     <ResultCard />
   </div>

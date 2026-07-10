@@ -8,8 +8,8 @@ const world = useWorldStore()
   <Transition name="prompt">
     <div v-if="world.prompt" class="prompt">
       <span>{{ world.prompt }}</span>
-      <kbd>E</kbd>
-      <small>/ tap</small>
+      <span class="prompt__key"><kbd>E</kbd> /</span>
+      <small>tap</small>
     </div>
   </Transition>
 </template>
@@ -17,12 +17,13 @@ const world = useWorldStore()
 <style scoped>
 .prompt {
   position: fixed;
-  bottom: 6rem;
+  bottom: calc(6rem + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  max-width: calc(100vw - 2rem);
   padding: 0.5rem 0.9rem;
   border: 1px solid var(--color-border);
   border-radius: 999px;
@@ -32,6 +33,18 @@ const world = useWorldStore()
   font-weight: 600;
   pointer-events: none;
   z-index: 2;
+}
+
+.prompt__key {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+@media (pointer: coarse) {
+  .prompt__key {
+    display: none;
+  }
 }
 
 kbd {

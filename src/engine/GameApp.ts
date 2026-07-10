@@ -20,13 +20,18 @@ export class GameApp {
       antialias: options.antialias ?? false,
       resizeTo: window,
       autoDensity: true,
-      resolution: window.devicePixelRatio || 1,
+      resolution: Math.min(window.devicePixelRatio || 1, 2),
     })
     return new GameApp(pixi)
   }
 
   mount(container: HTMLElement): void {
-    container.appendChild(this.pixi.canvas)
+    const { canvas } = this.pixi
+    canvas.style.touchAction = 'none'
+    canvas.style.userSelect = 'none'
+    canvas.style.setProperty('-webkit-user-select', 'none')
+    canvas.style.setProperty('-webkit-touch-callout', 'none')
+    container.appendChild(canvas)
   }
 
   destroy(): void {

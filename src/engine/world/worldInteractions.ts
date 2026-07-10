@@ -73,7 +73,7 @@ export function portalToStructure(portal: PortalDef): WorldStructure {
     solid: false,
     doorX: portal.x,
     doorY: portal.y,
-    clickRadius: 60,
+    clickRadius: 96,
     promptRadius: 86,
     enterRadius: 54,
   }

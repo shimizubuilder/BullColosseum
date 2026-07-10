@@ -87,6 +87,8 @@ export class IsoWorldScene extends BaseScene {
   private prompt: string | null = null
   private promptTarget: string | null = null
   private pendingEnter: EnterIntent | null = null
+  private readonly moveAxis = { x: 0, y: 0 }
+  private readonly bounds: ReturnType<typeof isoBounds>
 
   constructor(context: SceneContext, config: IsoWorldConfig) {
     super(context)
@@ -95,6 +97,7 @@ export class IsoWorldScene extends BaseScene {
     this.map = config.map
     this.structures = structuresForMap(config.map)
     this.grid = buildBlockedGrid(solidFootprints(this.structures), config.map.width, config.map.height)
+    this.bounds = isoBounds(config.map.width, config.map.height)
     this.player = { x: this.map.spawn.x, y: this.map.spawn.y, facing: 1, phase: 0, path: null, pathIndex: 0 }
 
     this.worldLayer.addChild(createGroundLayer(this.map, context.assets))
@@ -164,6 +167,19 @@ export class IsoWorldScene extends BaseScene {
     this.inputEnabled = enabled
     if (!enabled) {
       this.player.path = null
+      this.moveAxis.x = 0
+      this.moveAxis.y = 0
+    }
+  }
+
+  setMoveAxis(x: number, y: number): void {
+    this.moveAxis.x = x
+    this.moveAxis.y = y
+  }
+
+  interact(): void {
+    if (this.inputEnabled && this.promptTarget) {
+      this.emitEnter(this.promptTarget)
     }
   }
 
@@ -194,12 +210,14 @@ export class IsoWorldScene extends BaseScene {
     let dx = 0
     let dy = 0
     const axis = this.input.axis()
-    if (axis.x || axis.y) {
+    const moveX = axis.x + this.moveAxis.x
+    const moveY = axis.y + this.moveAxis.y
+    if (moveX || moveY) {
       this.player.path = null
       this.pendingEnter = null
-      const length = Math.hypot(axis.x, axis.y)
-      dx = axis.x / length
-      dy = axis.y / length
+      const length = Math.hypot(moveX, moveY)
+      dx = moveX / length
+      dy = moveY / length
     } else if (this.player.path) {
       const waypoint = this.player.path[this.player.pathIndex]
       if (waypoint) {
@@ -241,7 +259,7 @@ export class IsoWorldScene extends BaseScene {
     const width = this.context.app.screen.width
     const height = this.context.app.screen.height
     const iso = worldToIso(this.player.x, this.player.y)
-    const bounds = isoBounds(this.map.width, this.map.height)
+    const bounds = this.bounds
     this.cameraX = clamp(iso.x - width / 2, bounds.minX - 100, Math.max(bounds.minX - 100, bounds.maxX + 100 - width))
     this.cameraY = clamp(iso.y - height / 2, bounds.minY - 140, Math.max(bounds.minY - 140, bounds.maxY + 180 - height))
     this.worldLayer.position.set(Math.round(-this.cameraX), Math.round(-this.cameraY))

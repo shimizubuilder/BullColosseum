@@ -23,6 +23,7 @@ export class SceneManager {
   private active: Scene | null = null
   private activeId: SceneId | null = null
   private pending: PendingTransition | null = null
+  private loading = false
 
   constructor(
     private readonly stage: Container,
@@ -38,23 +39,28 @@ export class SceneManager {
     return this.pending !== null
   }
 
-  setImmediate(id: SceneId): void {
-    const scene = createScene(id, this.context)
+  async setImmediate(id: SceneId): Promise<void> {
+    const scene = await createScene(id, this.context)
     this.replaceActive(scene, id)
   }
 
   async changeTo(id: SceneId): Promise<void> {
-    if (this.pending || this.activeId === id) {
+    if (this.pending || this.loading || this.activeId === id) {
       return
     }
     if (!canTransition(this.activeId, id) || !isSceneRegistered(id)) {
       console.warn(`[SceneManager] blocked transition ${this.activeId ?? 'null'} -> ${id}`)
       return
     }
-    const next = createScene(id, this.context)
-    await next.preload?.()
-    this.pending = { to: id, next, elapsed: 0, swapped: false }
-    this.bus.emit('transition:start', { from: this.activeId, to: id })
+    this.loading = true
+    try {
+      const next = await createScene(id, this.context)
+      await next.preload?.()
+      this.pending = { to: id, next, elapsed: 0, swapped: false }
+      this.bus.emit('transition:start', { from: this.activeId, to: id })
+    } finally {
+      this.loading = false
+    }
   }
 
   advance(deltaMs: number): void {
@@ -90,6 +96,14 @@ export class SceneManager {
   setInputEnabled(enabled: boolean): void {
     this.active?.setInputEnabled?.(enabled)
     this.pending?.next.setInputEnabled?.(enabled)
+  }
+
+  setMoveAxis(x: number, y: number): void {
+    this.active?.setMoveAxis?.(x, y)
+  }
+
+  interact(): void {
+    this.active?.interact?.()
   }
 
   setPlayerIdentity(identity: PlayerIdentity): void {

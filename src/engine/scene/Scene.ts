@@ -39,6 +39,8 @@ export interface Scene {
   render?(alpha: number): void
   resize?(width: number, height: number): void
   setInputEnabled?(enabled: boolean): void
+  setMoveAxis?(x: number, y: number): void
+  interact?(): void
   setPlayerIdentity?(identity: PlayerIdentity): void
   setRemoteActors?(actors: RemoteActorData[]): void
   setFarms?(ownerships: PlotOwnership[]): void
