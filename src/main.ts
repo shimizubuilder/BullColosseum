@@ -3,6 +3,8 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import { setupPersistence } from '@/stores/plugins/persistence'
 import { bootstrap } from '@/app/bootstrap'
+import '@fontsource/cinzel/latin-700.css'
+import '@fontsource/cinzel/latin-900.css'
 import '@/styles/base.css'
 
 const app = createApp(App)
