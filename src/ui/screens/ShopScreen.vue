@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { usePlayerStore } from '@/stores/usePlayerStore'
 import { GEAR, type GearDefinition } from '@/domain/config/gear'
 import OverlayShell from '@/ui/components/OverlayShell.vue'
+import CurrencyAmount from '@/ui/components/CurrencyAmount.vue'
 
 const player = usePlayerStore()
 
@@ -22,16 +23,12 @@ function canAfford(gear: GearDefinition): boolean {
   return balanceFor(gear) >= gear.cost
 }
 
-function priceLabel(gear: GearDefinition): string {
-  return `${gear.cost} ${gear.currency === 'token' ? '◆' : '◈'}`
-}
-
 const gold = computed(() => player.player?.currency.gold ?? 0)
 const token = computed(() => player.player?.currency.chargeToken ?? 0)
 </script>
 
 <template>
-  <OverlayShell title="Gear Shop" :subtitle="`${gold} ◈ · ${token} ◆`">
+  <OverlayShell title="Gear Shop" :subtitle="`${gold} Gold · ${token} $CHARGE`">
     <ul class="shop">
       <li v-for="gear in items" :key="gear.id" class="item">
         <div class="item__info">
@@ -47,7 +44,8 @@ const token = computed(() => player.player?.currency.chargeToken ?? 0)
           :disabled="isOwned(gear.id) || !canAfford(gear)"
           @click="player.buyGear(gear.id)"
         >
-          {{ isOwned(gear.id) ? 'Owned' : priceLabel(gear) }}
+          <template v-if="isOwned(gear.id)">Owned</template>
+          <CurrencyAmount v-else :kind="gear.currency === 'token' ? 'token' : 'gold'" :amount="gear.cost" />
         </button>
       </li>
     </ul>
@@ -104,6 +102,9 @@ const token = computed(() => player.player?.currency.chargeToken ?? 0)
 
 .item__buy {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 88px;
   height: 38px;
   border: 1px solid var(--color-border);
@@ -116,7 +117,13 @@ const token = computed(() => player.player?.currency.chargeToken ?? 0)
   transition: border-color 0.15s ease;
 }
 
-.item__buy:hover:not(:disabled) {
+@media (hover: hover) {
+  .item__buy:hover:not(:disabled) {
+    border-color: var(--color-accent);
+  }
+}
+
+.item__buy:active:not(:disabled) {
   border-color: var(--color-accent);
 }
 

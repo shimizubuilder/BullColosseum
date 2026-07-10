@@ -2,7 +2,7 @@ import type { LeaderboardEntryDto } from '@/services/dto/leaderboard.dto'
 import type { ChatMessageDto } from '@/services/dto/chat.dto'
 
 export const SEEDED_CHAT: ChatMessageDto[] = [
-  { username: 'Charger_Prime', avatar: 'ansem', message: 'No Retreat. Only Charge. 🐂' },
+  { username: 'Charger_Prime', avatar: 'ansem', message: 'No Retreat. Only Charge.' },
   { username: 'SolBull', avatar: 'red', message: 'anyone selling a cheap pen on Farm Island?' },
   { username: 'System', avatar: 'gold', message: '(offline mode — start the backend for global chat)' },
 ]

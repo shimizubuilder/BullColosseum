@@ -1,9 +1,21 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, type Component } from 'vue'
 import { usePlayerStore } from '@/stores/usePlayerStore'
 import { useSceneStore, type OverlayId } from '@/stores/useSceneStore'
 import { usePresenceStore } from '@/stores/usePresenceStore'
 import { useKingStore } from '@/stores/useKingStore'
+import CurrencyAmount from '@/ui/components/CurrencyAmount.vue'
+import DivisionIcon from '@/ui/components/DivisionIcon.vue'
+import IconBull from '~icons/game-icons/bull'
+import IconSwapBag from '~icons/game-icons/swap-bag'
+import IconLockedChest from '~icons/game-icons/locked-chest'
+import IconTrophyCup from '~icons/game-icons/trophy-cup'
+import IconScrollUnfurled from '~icons/game-icons/scroll-unfurled'
+import IconLaurelCrown from '~icons/game-icons/laurel-crown'
+import IconUser from '~icons/tabler/user'
+import IconBook from '~icons/tabler/book-2'
+import IconUsers from '~icons/tabler/users'
+import IconTrendingUp from '~icons/tabler/trending-up'
 
 const player = usePlayerStore()
 const scene = useSceneStore()
@@ -15,14 +27,14 @@ const gold = computed(() => player.player?.currency.gold ?? 0)
 const chargeToken = computed(() => player.player?.currency.chargeToken ?? 0)
 const rating = computed(() => player.player?.record.rating ?? 0)
 
-const docks: { id: OverlayId; label: string; icon: string }[] = [
-  { id: 'stable', label: 'Stable', icon: '🐂' },
-  { id: 'shop', label: 'Shop', icon: '🛒' },
-  { id: 'vault', label: 'Vault', icon: '🏦' },
-  { id: 'leaderboard', label: 'Ranks', icon: '🏆' },
-  { id: 'quests', label: 'Quests', icon: '📋' },
-  { id: 'profile', label: 'Profile', icon: '👤' },
-  { id: 'guide', label: 'Guide', icon: '📖' },
+const docks: { id: OverlayId; label: string; icon: Component }[] = [
+  { id: 'stable', label: 'Stable', icon: IconBull },
+  { id: 'shop', label: 'Shop', icon: IconSwapBag },
+  { id: 'vault', label: 'Vault', icon: IconLockedChest },
+  { id: 'leaderboard', label: 'Ranks', icon: IconTrophyCup },
+  { id: 'quests', label: 'Quests', icon: IconScrollUnfurled },
+  { id: 'profile', label: 'Profile', icon: IconUser },
+  { id: 'guide', label: 'Guide', icon: IconBook },
 ]
 </script>
 
@@ -32,14 +44,16 @@ const docks: { id: OverlayId; label: string; icon: string }[] = [
       <span class="hud__brand">CHARGE ARENA</span>
       <div class="hud__stats">
         <span class="badge">{{ username }}</span>
-        <span class="badge">👥 {{ presence.onlineCount }}</span>
-        <span class="badge badge--gold">◈ {{ gold }}</span>
-        <span class="badge badge--token">◆ {{ chargeToken }}</span>
-        <span class="badge">▲ {{ rating }}</span>
+        <span class="badge"><IconUsers class="badge__icon" /> {{ presence.onlineCount }}</span>
+        <span class="badge"><CurrencyAmount kind="gold" :amount="gold" /></span>
+        <span class="badge"><CurrencyAmount kind="token" :amount="chargeToken" /></span>
+        <span class="badge"><IconTrendingUp class="badge__icon" /> {{ rating }}</span>
         <span class="badge" :style="{ color: player.division.color }">
-          {{ player.division.icon }} {{ player.division.name }}
+          <DivisionIcon :icon-key="player.division.iconKey" /> {{ player.division.name }}
         </span>
-        <span v-if="king.state" class="badge badge--king">👑 {{ king.state.username }}</span>
+        <span v-if="king.state" class="badge badge--king">
+          <IconLaurelCrown class="badge__icon" /> {{ king.state.username }}
+        </span>
       </div>
     </header>
 
@@ -51,7 +65,7 @@ const docks: { id: OverlayId; label: string; icon: string }[] = [
         class="dock__btn"
         @click="scene.openOverlay(dock.id)"
       >
-        <span class="dock__icon">{{ dock.icon }}</span>
+        <component :is="dock.icon" class="dock__icon" />
         <small>{{ dock.label }}</small>
       </button>
     </nav>
@@ -68,15 +82,18 @@ const docks: { id: OverlayId; label: string; icon: string }[] = [
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.6rem 1rem;
-  pointer-events: auto;
+  padding: calc(0.6rem + env(safe-area-inset-top)) calc(1rem + env(safe-area-inset-right)) 0.6rem
+    calc(1rem + env(safe-area-inset-left));
+  pointer-events: none;
   background: linear-gradient(180deg, rgba(15, 18, 22, 0.92), rgba(15, 18, 22, 0));
 }
 
 .hud__brand {
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: var(--color-accent);
+  pointer-events: auto;
+  font-family: var(--font-display);
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: var(--color-gold-soft);
 }
 
 .hud__stats {
@@ -96,36 +113,43 @@ const docks: { id: OverlayId; label: string; icon: string }[] = [
   background: rgba(10, 13, 17, 0.7);
   font-size: 0.8rem;
   font-weight: 600;
+  pointer-events: auto;
 }
 
-.badge--gold {
-  color: #ffcf4a;
-}
-
-.badge--token {
-  color: var(--color-accent);
+.badge__icon {
+  width: 1em;
+  height: 1em;
+  flex: none;
 }
 
 .badge--king {
-  color: #ffcf4a;
+  color: var(--color-gold);
 }
 
 .dock {
   position: fixed;
-  bottom: 1rem;
+  bottom: calc(1rem + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   gap: 0.5rem;
+  max-width: calc(100vw - 0.5rem);
   padding: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
   border: 1px solid var(--color-border);
   border-radius: 14px;
   background: rgba(15, 18, 22, 0.85);
   pointer-events: auto;
 }
 
+.dock::-webkit-scrollbar {
+  display: none;
+}
+
 .dock__btn {
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
   align-items: center;
   gap: 0.2rem;
@@ -141,17 +165,61 @@ const docks: { id: OverlayId; label: string; icon: string }[] = [
     color 0.15s ease;
 }
 
-.dock__btn:hover {
-  background: rgba(229, 72, 77, 0.12);
+@media (hover: hover) {
+  .dock__btn:hover {
+    background: rgba(229, 72, 77, 0.12);
+    color: var(--color-text);
+  }
+}
+
+.dock__btn:active {
+  background: rgba(229, 72, 77, 0.2);
   color: var(--color-text);
 }
 
 .dock__icon {
-  font-size: 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .dock__btn small {
   font-size: 0.66rem;
   letter-spacing: 0.02em;
+}
+
+@media (max-width: 480px) {
+  .hud {
+    gap: 0.5rem;
+  }
+
+  .hud__brand {
+    font-size: 0.78rem;
+  }
+
+  .badge {
+    padding: 0.25rem 0.45rem;
+    font-size: 0.7rem;
+  }
+
+  .dock {
+    width: calc(100vw - 0.5rem);
+    gap: 0.25rem;
+  }
+
+  .dock__btn {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    padding: 0.4rem 0.1rem;
+  }
+
+  .dock__icon {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+
+  .dock__btn small {
+    font-size: 0.56rem;
+  }
 }
 </style>

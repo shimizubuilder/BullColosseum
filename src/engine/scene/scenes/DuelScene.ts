@@ -5,6 +5,7 @@ import { ELEMENTS } from '@/domain/config/elements'
 import { winWidth } from '@/domain/stats'
 import { DuelDirector, type DuelFighter, type DuelSetup, type DuelSnapshot } from '@/engine/duel/DuelDirector'
 import { BullSprite } from '@/engine/duel/BullSprite'
+import { BODY_FONT, DISPLAY_FONT, GOLD_FILL } from '@/engine/ui/textStyles'
 
 const VIRTUAL_WIDTH = 960
 const VIRTUAL_HEIGHT = 540
@@ -14,6 +15,10 @@ const OUT_RIGHT = VIRTUAL_WIDTH - 90
 
 function clashPositionX(clash: number): number {
   return lerp(OUT_LEFT + 150, OUT_RIGHT - 150, clash)
+}
+
+function elementColor(hex: string): number {
+  return parseInt(hex.replace('#', ''), 16)
 }
 
 function fallbackFighter(name: string): DuelFighter {
@@ -40,6 +45,7 @@ export class DuelScene extends BaseScene {
   private director: DuelDirector
   private me: DuelFighter
   private foe: DuelFighter
+  private meColor: number
   private readonly meBull: BullSprite
   private readonly foeBull: BullSprite
 
@@ -70,6 +76,7 @@ export class DuelScene extends BaseScene {
     this.me = setup?.me ?? fallbackFighter('You')
     this.foe = setup?.foe ?? fallbackFighter('Rival')
     this.director = new DuelDirector(this.me, this.foe, Math.random, setup?.spectate ?? false)
+    this.meColor = elementColor(ELEMENTS[this.me.element].primaryColor)
 
     this.stage.addChild(this.backdrop)
     this.stage.addChild(this.arena)
@@ -80,19 +87,19 @@ export class DuelScene extends BaseScene {
     this.stage.addChild(this.hud)
 
     this.meName = new Text({
-      text: `▸ ${this.me.name}`,
-      style: { fontFamily: 'Segoe UI, sans-serif', fontSize: 18, fontWeight: '800', fill: 0xffffff },
+      text: this.me.name,
+      style: { fontFamily: BODY_FONT, fontSize: 18, fontWeight: '800', fill: 0xffffff },
     })
     this.meName.position.set(24, 26)
     this.foeName = new Text({
-      text: `${this.foe.name} ◂`,
-      style: { fontFamily: 'Segoe UI, sans-serif', fontSize: 18, fontWeight: '800', fill: 0xff8a8a },
+      text: this.foe.name,
+      style: { fontFamily: BODY_FONT, fontSize: 18, fontWeight: '800', fill: 0xff8a8a },
     })
     this.foeName.anchor.set(1, 0)
     this.foeName.position.set(VIRTUAL_WIDTH - 24, 26)
     this.banner = new Text({
       text: '',
-      style: { fontFamily: 'Segoe UI, sans-serif', fontSize: 40, fontWeight: '900', fill: 0xffcf4a, stroke: { color: 0x000000, width: 6 } },
+      style: { fontFamily: DISPLAY_FONT, fontSize: 40, fontWeight: '900', fill: GOLD_FILL, stroke: { color: 0x000000, width: 6 } },
     })
     this.banner.anchor.set(0.5)
     this.banner.position.set(VIRTUAL_WIDTH / 2, 150)
@@ -124,10 +131,11 @@ export class DuelScene extends BaseScene {
     this.me = setup.me
     this.foe = setup.foe
     this.director = new DuelDirector(this.me, this.foe, Math.random, setup.spectate)
+    this.meColor = elementColor(ELEMENTS[this.me.element].primaryColor)
     this.meBull.setElement(this.me.element, ELEMENTS[this.me.element].primaryColor)
     this.foeBull.setElement(this.foe.element, ELEMENTS[this.foe.element].primaryColor)
-    this.meName.text = `▸ ${this.me.name}`
-    this.foeName.text = `${this.foe.name} ◂`
+    this.meName.text = this.me.name
+    this.foeName.text = this.foe.name
     this.meX = OUT_LEFT
     this.foeX = OUT_RIGHT
     this.meThrow = 0
@@ -237,7 +245,7 @@ export class DuelScene extends BaseScene {
     const g = this.hud
     g.clear()
 
-    const meColor = parseInt(ELEMENTS[this.me.element].primaryColor.replace('#', ''), 16)
+    const meColor = this.meColor
     const barX = VIRTUAL_WIDTH / 2 - 180
     const barWidth = 360
     const split = barWidth * snapshot.clash

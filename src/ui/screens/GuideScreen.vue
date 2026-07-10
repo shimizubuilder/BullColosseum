@@ -1,10 +1,22 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, type Component } from 'vue'
 import OverlayShell from '@/ui/components/OverlayShell.vue'
+import IconBull from '~icons/game-icons/bull'
+import IconGamepad from '~icons/tabler/device-gamepad-2'
+import IconCrossedSwords from '~icons/game-icons/crossed-swords'
+import IconBarn from '~icons/game-icons/barn'
+import IconLaurels from '~icons/game-icons/laurels'
+import IconScrollUnfurled from '~icons/game-icons/scroll-unfurled'
+import IconLaurelCrown from '~icons/game-icons/laurel-crown'
+import IconTrophyCup from '~icons/game-icons/trophy-cup'
+import IconWheat from '~icons/game-icons/wheat'
+import IconWallet from '~icons/tabler/wallet'
+import IconTwoCoins from '~icons/game-icons/two-coins'
 
 interface GuideSection {
   id: string
   title: string
+  icon: Component
   heading: string
   intro?: string
   bullets: string[]
@@ -13,7 +25,8 @@ interface GuideSection {
 const SECTIONS: GuideSection[] = [
   {
     id: 'start',
-    title: '🐂 Getting Started',
+    title: 'Getting Started',
+    icon: IconBull,
     heading: 'Welcome, Handler',
     intro: 'You play as Ansem — The Charger, raising a Bull from the Black Bull bloodline.',
     bullets: [
@@ -25,7 +38,8 @@ const SECTIONS: GuideSection[] = [
   },
   {
     id: 'controls',
-    title: '🕹️ Controls',
+    title: 'Controls',
+    icon: IconGamepad,
     heading: 'Moving around',
     bullets: [
       'Use WASD, arrow keys, or click a spot to walk there.',
@@ -37,7 +51,8 @@ const SECTIONS: GuideSection[] = [
   },
   {
     id: 'arena',
-    title: '⚔ Colosseum',
+    title: 'Colosseum',
+    icon: IconCrossedSwords,
     heading: 'Charge Clash duel',
     intro: 'Duels are real-time, around 15 seconds, with one action: tap.',
     bullets: [
@@ -49,7 +64,8 @@ const SECTIONS: GuideSection[] = [
   },
   {
     id: 'stable',
-    title: '🐂 Stable & Training',
+    title: 'Stable & Training',
+    icon: IconBarn,
     heading: 'Raise your Bull',
     bullets: [
       'Track stats: Power, Defense, Speed, Stamina.',
@@ -59,7 +75,8 @@ const SECTIONS: GuideSection[] = [
   },
   {
     id: 'ranked',
-    title: '🏅 Rankings & Divisions',
+    title: 'Rankings & Divisions',
+    icon: IconLaurels,
     heading: 'Climb the ladder',
     intro: 'Rating places you in a division from Bronze up to Emperor.',
     bullets: [
@@ -69,7 +86,8 @@ const SECTIONS: GuideSection[] = [
   },
   {
     id: 'quests',
-    title: '📋 Daily Quests',
+    title: 'Daily Quests',
+    icon: IconScrollUnfurled,
     heading: 'Quest Board',
     intro: 'Open the Quest Board for three daily quests that reset every day.',
     bullets: [
@@ -79,7 +97,8 @@ const SECTIONS: GuideSection[] = [
   },
   {
     id: 'king',
-    title: '👑 King of the Arena',
+    title: 'King of the Arena',
+    icon: IconLaurelCrown,
     heading: 'Rule the lobby',
     bullets: [
       'Only one King exists at a time.',
@@ -89,7 +108,8 @@ const SECTIONS: GuideSection[] = [
   },
   {
     id: 'tournament',
-    title: '🏆 Tournaments',
+    title: 'Tournaments',
+    icon: IconTrophyCup,
     heading: 'Single-elim brackets',
     bullets: [
       'Eight fighters: Quarterfinal, Semifinal, Final.',
@@ -100,7 +120,8 @@ const SECTIONS: GuideSection[] = [
   },
   {
     id: 'farm',
-    title: '🏝️ Farm Island & Breeding',
+    title: 'Farm Island & Breeding',
+    icon: IconWheat,
     heading: 'Own a Pen, breed Bulls',
     intro: 'Take the portal to Farm Island.',
     bullets: [
@@ -112,7 +133,8 @@ const SECTIONS: GuideSection[] = [
   },
   {
     id: 'wallet',
-    title: '🔐 Profile & Wallet',
+    title: 'Profile & Wallet',
+    icon: IconWallet,
     heading: 'Solana wallet',
     bullets: [
       'Connect Phantom or paste an address; it is recorded as unverified.',
@@ -122,7 +144,8 @@ const SECTIONS: GuideSection[] = [
   },
   {
     id: 'economy',
-    title: '💰 Shop & Vault',
+    title: 'Shop & Vault',
+    icon: IconTwoCoins,
     heading: 'Economy',
     bullets: [
       'Gear Shop: cosmetic gear with small stats; legendary items are token-gated.',
@@ -150,6 +173,7 @@ function select(section: GuideSection): void {
           :class="{ 'is-active': section.id === selected.id }"
           @click="select(section)"
         >
+          <component :is="section.icon" class="guide__tab-icon" />
           {{ section.title }}
         </button>
       </nav>
@@ -179,7 +203,28 @@ function select(section: GuideSection): void {
   overflow-y: auto;
 }
 
+@media (max-width: 560px) {
+  .guide {
+    grid-template-columns: 1fr;
+  }
+
+  .guide__nav {
+    flex-direction: row;
+    max-height: none;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .guide__tab {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
+
 .guide__tab {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   text-align: left;
   padding: 0.45rem 0.5rem;
   border: 1px solid transparent;
@@ -190,8 +235,16 @@ function select(section: GuideSection): void {
   cursor: pointer;
 }
 
-.guide__tab:hover {
-  color: var(--color-text);
+.guide__tab-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex: none;
+}
+
+@media (hover: hover) {
+  .guide__tab:hover {
+    color: var(--color-text);
+  }
 }
 
 .guide__tab.is-active {

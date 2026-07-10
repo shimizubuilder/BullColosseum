@@ -3,17 +3,14 @@ import { computed, onMounted } from 'vue'
 import { currentDateKey, useQuestStore } from '@/stores/useQuestStore'
 import { formatQuestDescription, isQuestClaimable, type Quest } from '@/domain/quests'
 import OverlayShell from '@/ui/components/OverlayShell.vue'
+import CurrencyAmount from '@/ui/components/CurrencyAmount.vue'
+import IconCheck from '~icons/tabler/check'
 
 const quest = useQuestStore()
 
 const subtitle = computed(() =>
   quest.claimable > 0 ? `${quest.claimable} reward${quest.claimable > 1 ? 's' : ''} ready` : 'Resets daily',
 )
-
-function rewardLabel(item: Quest): string {
-  const gold = `${item.reward.gold} ◈`
-  return item.reward.token ? `${gold} · ${item.reward.token} ◆` : gold
-}
 
 function barWidth(item: Quest): string {
   return `${Math.min(100, (100 * item.progress) / item.target)}%`
@@ -31,7 +28,13 @@ onMounted(() => {
         <div class="quest__info">
           <b class="quest__desc">{{ formatQuestDescription(item) }}</b>
           <div class="quest__bar"><i :style="{ width: barWidth(item) }" /></div>
-          <small>{{ item.progress }} / {{ item.target }} · {{ rewardLabel(item) }}</small>
+          <small class="quest__reward">
+            {{ item.progress }} / {{ item.target }} ·
+            <CurrencyAmount kind="gold" :amount="item.reward.gold" />
+            <template v-if="item.reward.token">
+              · <CurrencyAmount kind="token" :amount="item.reward.token" />
+            </template>
+          </small>
         </div>
         <button
           class="quest__claim"
@@ -39,7 +42,8 @@ onMounted(() => {
           :disabled="!isQuestClaimable(item)"
           @click="quest.claim(item.id)"
         >
-          {{ item.claimed ? '✓' : 'Claim' }}
+          <IconCheck v-if="item.claimed" class="quest__done" />
+          <template v-else>Claim</template>
         </button>
       </li>
     </ul>
@@ -100,15 +104,36 @@ onMounted(() => {
   color: var(--color-text-muted);
 }
 
+.quest__reward {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
 .quest__claim {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   height: 38px;
   padding: 0 0.9rem;
   border: 1px solid rgba(64, 200, 128, 0.5);
   border-radius: 9px;
   background: rgba(64, 200, 128, 0.14);
-  color: #56d6a0;
+  color: var(--color-success);
   font-weight: 700;
   cursor: pointer;
+}
+
+@media (hover: hover) {
+  .quest__claim:hover:not(:disabled) {
+    border-color: var(--color-success);
+    background: rgba(64, 200, 128, 0.24);
+  }
+}
+
+.quest__claim:active:not(:disabled) {
+  background: rgba(64, 200, 128, 0.24);
 }
 
 .quest__claim:disabled {
@@ -116,5 +141,10 @@ onMounted(() => {
   background: transparent;
   color: var(--color-text-muted);
   cursor: default;
+}
+
+.quest__done {
+  width: 1rem;
+  height: 1rem;
 }
 </style>

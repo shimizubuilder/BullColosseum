@@ -6,6 +6,7 @@ import { useQuestStore } from '@/stores/useQuestStore'
 import { calfCost, farmRatePerHour, plotPrice } from '@/domain/economy'
 import { ELEMENTS } from '@/domain/config/elements'
 import OverlayShell from '@/ui/components/OverlayShell.vue'
+import CurrencyAmount from '@/ui/components/CurrencyAmount.vue'
 
 const player = usePlayerStore()
 const farm = useFarmStore()
@@ -56,7 +57,7 @@ async function collect(): Promise<void> {
   if (earned > 0) {
     quest.progress('collect', 1)
   }
-  message.value = earned > 0 ? `Collected ${earned} ◈.` : 'Nothing to collect yet.'
+  message.value = earned > 0 ? `Collected ${earned} gold.` : 'Nothing to collect yet.'
   await refresh()
 }
 
@@ -81,7 +82,7 @@ async function breed(): Promise<void> {
       <div v-if="isEmpty && ownPlot === null" class="pen__buy">
         <p>An empty pen. Buy it to rest and breed bulls that earn passive gold.</p>
         <button class="btn btn--primary" type="button" :disabled="gold < penPrice" @click="buy">
-          Buy pen · {{ penPrice }} ◈
+          Buy pen · <CurrencyAmount kind="gold" :amount="penPrice" />
         </button>
       </div>
 
@@ -92,7 +93,7 @@ async function breed(): Promise<void> {
       <template v-else>
         <div class="pen__stat">
           <span>Capacity {{ storedBulls.length }}/{{ capacity }}</span>
-          <span>Earning {{ ratePerHour }} ◈/h · up to 8h</span>
+          <span class="pen__rate">Earning <CurrencyAmount kind="gold" :amount="ratePerHour" />/h · up to 8h</span>
         </div>
 
         <ul class="roster">
@@ -105,7 +106,7 @@ async function breed(): Promise<void> {
 
         <button class="btn btn--ok" type="button" @click="collect">Collect earnings</button>
         <button class="btn" type="button" :disabled="penFull || gold < calfPrice" @click="buyCalf">
-          Buy calf · {{ calfPrice }} ◈
+          Buy calf · <CurrencyAmount kind="gold" :amount="calfPrice" />
         </button>
 
         <div class="breed">
@@ -124,7 +125,7 @@ async function breed(): Promise<void> {
             :disabled="penFull || gold < calfPrice || firstParent === secondParent || roster.length < 2"
             @click="breed"
           >
-            Breed · {{ calfPrice }} ◈
+            Breed · <CurrencyAmount kind="gold" :amount="calfPrice" />
           </button>
         </div>
       </template>
@@ -153,6 +154,12 @@ async function breed(): Promise<void> {
   justify-content: space-between;
   font-size: 0.78rem;
   color: var(--color-text-muted);
+}
+
+.pen__rate {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .roster {
@@ -212,6 +219,10 @@ async function breed(): Promise<void> {
 }
 
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
   height: 42px;
   border: 1px solid var(--color-border);
   border-radius: 10px;
@@ -219,6 +230,16 @@ async function breed(): Promise<void> {
   color: var(--color-text);
   font-weight: 700;
   cursor: pointer;
+}
+
+@media (hover: hover) {
+  .btn:hover:not(:disabled) {
+    border-color: var(--color-accent);
+  }
+}
+
+.btn:active:not(:disabled) {
+  border-color: var(--color-accent);
 }
 
 .btn:disabled {
@@ -232,9 +253,13 @@ async function breed(): Promise<void> {
   color: #fff;
 }
 
+.btn--primary:active:not(:disabled) {
+  filter: brightness(0.94);
+}
+
 .btn--ok {
   border-color: rgba(64, 200, 128, 0.5);
-  color: #56d6a0;
+  color: var(--color-success);
 }
 
 .pen__message {

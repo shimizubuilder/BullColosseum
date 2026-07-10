@@ -9,6 +9,10 @@ import {
   WalletError,
 } from '@/services/wallet/solanaWallet'
 import OverlayShell from '@/ui/components/OverlayShell.vue'
+import DivisionIcon from '@/ui/components/DivisionIcon.vue'
+import IconTrendingUp from '~icons/tabler/trending-up'
+import IconCircleCheck from '~icons/tabler/circle-check'
+import IconAlertTriangle from '~icons/tabler/alert-triangle'
 
 const player = usePlayerStore()
 
@@ -88,9 +92,11 @@ async function rename(): Promise<void> {
   <OverlayShell title="Profile" :subtitle="account?.username">
     <div v-if="player.player" class="profile">
       <div class="profile__head">
-        <span class="profile__record">{{ record.wins }}W · {{ record.losses }}L · ▲ {{ record.rating }}</span>
+        <span class="profile__record">
+          {{ record.wins }}W · {{ record.losses }}L · <IconTrendingUp class="profile__icon" /> {{ record.rating }}
+        </span>
         <span class="profile__division" :style="{ color: player.division.color }">
-          {{ player.division.icon }} {{ player.division.name }}
+          <DivisionIcon :icon-key="player.division.iconKey" /> {{ player.division.name }}
         </span>
       </div>
 
@@ -110,8 +116,10 @@ async function rename(): Promise<void> {
         <label class="field__label">Solana Wallet</label>
         <div class="wallet__status">
           <span class="wallet__addr">{{ shortAddress }}</span>
-          <span v-if="wallet.status === 'linked'" class="tag tag--linked">✓ Linked</span>
-          <span v-else-if="wallet.status === 'unverified'" class="tag tag--warn">⚠ Unverified</span>
+          <span v-if="wallet.status === 'linked'" class="tag tag--linked"><IconCircleCheck class="tag__icon" /> Linked</span>
+          <span v-else-if="wallet.status === 'unverified'" class="tag tag--warn">
+            <IconAlertTriangle class="tag__icon" /> Unverified
+          </span>
         </div>
         <div class="field__row">
           <button class="btn" type="button" @click="connect">Connect</button>
@@ -147,7 +155,21 @@ async function rename(): Promise<void> {
   color: var(--color-text-muted);
 }
 
+.profile__record {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.profile__icon {
+  width: 1em;
+  height: 1em;
+}
+
 .profile__division {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   font-weight: 700;
 }
 
@@ -182,7 +204,7 @@ async function rename(): Promise<void> {
 
 .field__input--mono {
   font-family: monospace;
-  font-size: 0.78rem;
+  font-size: 16px;
 }
 
 .field__input:disabled {
@@ -206,20 +228,28 @@ async function rename(): Promise<void> {
 }
 
 .tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   padding: 0.15rem 0.5rem;
   border-radius: 999px;
   font-size: 0.68rem;
   font-weight: 700;
 }
 
+.tag__icon {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
 .tag--linked {
   background: rgba(64, 200, 128, 0.18);
-  color: #56d6a0;
+  color: var(--color-success);
 }
 
 .tag--warn {
   background: rgba(255, 180, 60, 0.18);
-  color: #ffb43c;
+  color: var(--color-warn);
 }
 
 .btn {
@@ -240,6 +270,6 @@ async function rename(): Promise<void> {
 
 .btn--ok {
   border-color: rgba(64, 200, 128, 0.5);
-  color: #56d6a0;
+  color: var(--color-success);
 }
 </style>

@@ -6,6 +6,12 @@ import { useLeaderboardStore } from '@/stores/useLeaderboardStore'
 import { TOURNAMENT } from '@/domain/config/balance'
 import type { BracketMatch, TournamentMode } from '@/domain/combat/tournament'
 import OverlayShell from '@/ui/components/OverlayShell.vue'
+import CurrencyAmount from '@/ui/components/CurrencyAmount.vue'
+import IconLaurelCrown from '~icons/game-icons/laurel-crown'
+import IconCheck from '~icons/tabler/check'
+import IconPlus from '~icons/tabler/plus'
+import IconPlayerPlay from '~icons/tabler/player-play'
+import IconRefresh from '~icons/tabler/refresh'
 
 const player = usePlayerStore()
 const tournament = useTournamentStore()
@@ -80,8 +86,8 @@ onMounted(() => {
       </div>
 
       <div class="tn__bar">
-        <span class="tn__pool">Prize pool <b>{{ tournament.pool }}</b> ◈</span>
-        <span class="tn__gold">◈ {{ gold }}</span>
+        <span class="tn__pool">Prize pool <CurrencyAmount kind="gold" :amount="tournament.pool" /></span>
+        <CurrencyAmount kind="gold" :amount="gold" />
       </div>
 
       <div class="tn__bracket">
@@ -99,13 +105,18 @@ onMounted(() => {
       </div>
 
       <p v-if="tournament.finished" class="tn__champ">
-        <template v-if="tournament.champion?.isMe">👑 You won the tournament! +{{ tournament.pool }} ◈ +1 ◆</template>
-        <template v-else>👑 Champion: {{ tournament.champion?.name ?? '?' }}</template>
+        <IconLaurelCrown class="tn__champ-icon" />
+        <template v-if="tournament.champion?.isMe">
+          You won the tournament! <CurrencyAmount kind="gold" :amount="`+${tournament.pool}`" />
+          <CurrencyAmount kind="token" amount="+1" />
+        </template>
+        <template v-else>Champion: {{ tournament.champion?.name ?? '?' }}</template>
       </p>
 
       <div class="tn__actions">
         <button type="button" class="tn__btn" :disabled="!canJoin" @click="join">
-          {{ tournament.playerIn ? '✓ Joined' : `➕ Join (${entryCost} ◈)` }}
+          <template v-if="tournament.playerIn"><IconCheck class="tn__btn-icon" /> Joined</template>
+          <template v-else><IconPlus class="tn__btn-icon" /> Join <CurrencyAmount kind="gold" :amount="entryCost" /></template>
         </button>
         <button
           type="button"
@@ -113,9 +124,11 @@ onMounted(() => {
           :disabled="tournament.running || tournament.finished"
           @click="tournament.run()"
         >
-          ▶ Start
+          <IconPlayerPlay class="tn__btn-icon" /> Start
         </button>
-        <button type="button" class="tn__btn" :disabled="bracketLocked" @click="selectMode(tournament.mode)">↻ New</button>
+        <button type="button" class="tn__btn" :disabled="bracketLocked" @click="selectMode(tournament.mode)">
+          <IconRefresh class="tn__btn-icon" /> New
+        </button>
       </div>
     </div>
   </OverlayShell>
@@ -151,6 +164,18 @@ onMounted(() => {
   color: var(--color-text);
 }
 
+@media (hover: hover) {
+  .tn__mode:hover:not(:disabled) {
+    border-color: var(--color-accent);
+    color: var(--color-text);
+  }
+}
+
+.tn__mode:active:not(:disabled) {
+  border-color: var(--color-accent);
+  color: var(--color-text);
+}
+
 .tn__mode:disabled {
   opacity: 0.5;
   cursor: default;
@@ -159,15 +184,14 @@ onMounted(() => {
 .tn__bar {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   font-size: 0.8rem;
 }
 
-.tn__pool b {
-  color: #ffcf4a;
-}
-
-.tn__gold {
-  color: #ffcf4a;
+.tn__pool {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 .tn__bracket {
@@ -224,7 +248,7 @@ onMounted(() => {
 
 .tn__slot.is-win {
   border-color: rgba(64, 200, 128, 0.6);
-  color: #56d6a0;
+  color: var(--color-success);
 }
 
 .tn__slot.is-lose {
@@ -236,14 +260,25 @@ onMounted(() => {
 }
 
 .tn__champ {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
   margin: 0;
   padding: 0.6rem;
   border-radius: 10px;
   background: rgba(255, 207, 74, 0.12);
-  color: #ffcf4a;
+  color: var(--color-gold);
   font-weight: 700;
   text-align: center;
   font-size: 0.85rem;
+}
+
+.tn__champ-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: none;
 }
 
 .tn__actions {
@@ -253,6 +288,10 @@ onMounted(() => {
 
 .tn__btn {
   flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
   height: 40px;
   border: 1px solid var(--color-border);
   border-radius: 9px;
@@ -262,9 +301,25 @@ onMounted(() => {
   cursor: pointer;
 }
 
+.tn__btn-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex: none;
+}
+
 .tn__btn--go {
   border-color: rgba(229, 72, 77, 0.5);
   background: rgba(229, 72, 77, 0.14);
+}
+
+@media (hover: hover) {
+  .tn__btn:hover:not(:disabled) {
+    border-color: var(--color-accent);
+  }
+}
+
+.tn__btn:active:not(:disabled) {
+  border-color: var(--color-accent);
 }
 
 .tn__btn:disabled {

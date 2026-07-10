@@ -1,5 +1,6 @@
 import { Container, Graphics, Text } from 'pixi.js'
 import { AVATARS, type AvatarId } from '@/domain/config/avatars'
+import { BODY_FONT } from '@/engine/ui/textStyles'
 import { hexToNumber, shade } from './color'
 
 export class AvatarSprite {
@@ -16,7 +17,7 @@ export class AvatarSprite {
     this.container.addChild(this.figure)
     this.nameplate = new Text({
       text: name,
-      style: { fontFamily: 'Segoe UI, sans-serif', fontSize: 12, fontWeight: '800', fill: nameColor, stroke: { color: 0x000000, width: 3 } },
+      style: { fontFamily: BODY_FONT, fontSize: 12, fontWeight: '800', fill: nameColor, stroke: { color: 0x000000, width: 3 } },
     })
     this.nameplate.anchor.set(0.5, 1)
     this.nameplate.position.set(0, -52)

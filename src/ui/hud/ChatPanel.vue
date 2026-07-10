@@ -2,6 +2,9 @@
 import { nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
 import { useChatStore } from '@/stores/useChatStore'
 import { AVATARS, type AvatarId } from '@/domain/config/avatars'
+import IconChevronUp from '~icons/tabler/chevron-up'
+import IconChevronDown from '~icons/tabler/chevron-down'
+import IconSend from '~icons/tabler/send'
 
 const chat = useChatStore()
 const draft = ref('')
@@ -49,7 +52,10 @@ onUnmounted(() => {
     <header class="chat__head" @click="chat.toggleMinimized()">
       <b>GLOBAL CHAT</b>
       <span class="chat__mode" :class="`chat__mode--${chat.mode}`">{{ chat.mode }}</span>
-      <button class="chat__toggle" type="button" aria-label="Toggle chat">{{ chat.minimized ? '▲' : '▼' }}</button>
+      <button class="chat__toggle" type="button" aria-label="Toggle chat">
+        <IconChevronUp v-if="chat.minimized" />
+        <IconChevronDown v-else />
+      </button>
     </header>
     <div v-show="!chat.minimized" class="chat__body">
       <div ref="log" class="chat__log">
@@ -60,7 +66,7 @@ onUnmounted(() => {
       </div>
       <form class="chat__form" @submit.prevent="submit">
         <input v-model="draft" class="chat__input" maxlength="140" placeholder="Say something…" />
-        <button class="chat__send" type="submit">➤</button>
+        <button class="chat__send" type="submit" aria-label="Send message"><IconSend /></button>
       </form>
     </div>
   </section>
@@ -69,15 +75,35 @@ onUnmounted(() => {
 <style scoped>
 .chat {
   position: fixed;
-  bottom: 1rem;
-  left: 1rem;
-  width: min(320px, 34vw);
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  left: calc(1rem + env(safe-area-inset-left));
+  width: min(320px, calc(100vw - 2rem));
   border: 1px solid var(--color-border);
   border-radius: 12px;
   background: rgba(12, 9, 20, 0.86);
   pointer-events: auto;
   z-index: 3;
   overflow: hidden;
+}
+
+@media (max-width: 560px) {
+  .chat {
+    bottom: calc(6rem + env(safe-area-inset-bottom));
+    width: min(280px, calc(100vw - 2rem));
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .chat {
+    top: calc(4.75rem + env(safe-area-inset-top));
+    bottom: auto;
+    left: calc(0.75rem + env(safe-area-inset-left));
+    width: min(240px, calc(100vw - 1.5rem));
+  }
+
+  .chat__log {
+    height: 110px;
+  }
 }
 
 .chat__head {
@@ -100,7 +126,7 @@ onUnmounted(() => {
 
 .chat__mode--online {
   background: rgba(64, 200, 128, 0.18);
-  color: #56d6a0;
+  color: var(--color-success);
 }
 
 .chat__mode--offline {
@@ -110,10 +136,17 @@ onUnmounted(() => {
 
 .chat__toggle {
   margin-left: auto;
+  display: inline-flex;
+  align-items: center;
   border: none;
   background: transparent;
   color: var(--color-text-muted);
   cursor: pointer;
+}
+
+.chat__toggle svg {
+  width: 1rem;
+  height: 1rem;
 }
 
 .chat__log {
@@ -157,15 +190,23 @@ onUnmounted(() => {
   border-radius: 8px;
   background: rgba(10, 13, 17, 0.6);
   color: var(--color-text);
-  font-size: 0.8rem;
+  font-size: 16px;
 }
 
 .chat__send {
   width: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   border-radius: 8px;
   background: var(--color-accent);
   color: #fff;
   cursor: pointer;
+}
+
+.chat__send svg {
+  width: 1rem;
+  height: 1rem;
 }
 </style>

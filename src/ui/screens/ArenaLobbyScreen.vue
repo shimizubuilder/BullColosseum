@@ -5,6 +5,10 @@ import { useSceneStore } from '@/stores/useSceneStore'
 import { useDuelStore } from '@/stores/useDuelStore'
 import { TIERS } from '@/domain/config/tiers'
 import OverlayShell from '@/ui/components/OverlayShell.vue'
+import IconCrossedSwords from '~icons/game-icons/crossed-swords'
+import IconDeviceTv from '~icons/tabler/device-tv'
+import IconTrophyCup from '~icons/game-icons/trophy-cup'
+import IconLaurelCrown from '~icons/game-icons/laurel-crown'
 
 const player = usePlayerStore()
 const scene = useSceneStore()
@@ -26,31 +30,31 @@ function watchLive(): void {
 </script>
 
 <template>
-  <OverlayShell title="Colosseum" :subtitle="`${bullName} · ${tierName} · ▲ ${rating}`">
+  <OverlayShell title="Colosseum" :subtitle="`${bullName} · ${tierName} · Rating ${rating}`">
     <div class="lobby">
       <button class="lobby__card lobby__card--fight" type="button" @click="fight">
-        <span class="lobby__icon">⚔️</span>
+        <IconCrossedSwords class="lobby__icon" />
         <span class="lobby__text">
           <b>Ranked Duel</b>
           <small>Charge into a rated match. Win to climb divisions.</small>
         </span>
       </button>
       <button class="lobby__card" type="button" @click="watchLive">
-        <span class="lobby__icon">📺</span>
+        <IconDeviceTv class="lobby__icon" />
         <span class="lobby__text">
           <b>Watch Live</b>
           <small>Spectate top-player duels and bet gold on the winner.</small>
         </span>
       </button>
       <button class="lobby__card" type="button" @click="scene.openOverlay('tournament')">
-        <span class="lobby__icon">🏆</span>
+        <IconTrophyCup class="lobby__icon" />
         <span class="lobby__text">
           <b>Tournament</b>
           <small>Single-elim bracket. Win it all to take the prize pool.</small>
         </span>
       </button>
       <button class="lobby__card" type="button" @click="scene.openOverlay('king')">
-        <span class="lobby__icon">👑</span>
+        <IconLaurelCrown class="lobby__icon" />
         <span class="lobby__text">
           <b>King of the Arena</b>
           <small>Only one King rules the lobby. Challenge to take the throne.</small>
@@ -83,7 +87,14 @@ function watchLive(): void {
     border-color 0.15s ease;
 }
 
-.lobby__card:hover {
+@media (hover: hover) {
+  .lobby__card:hover {
+    border-color: var(--color-accent);
+    background: rgba(229, 72, 77, 0.1);
+  }
+}
+
+.lobby__card:active {
   border-color: var(--color-accent);
   background: rgba(229, 72, 77, 0.1);
 }
@@ -94,7 +105,10 @@ function watchLive(): void {
 }
 
 .lobby__icon {
-  font-size: 1.6rem;
+  width: 1.6rem;
+  height: 1.6rem;
+  flex: none;
+  color: var(--color-gold-soft);
 }
 
 .lobby__text {

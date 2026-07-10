@@ -4,6 +4,7 @@ import { useLeaderboardStore } from '@/stores/useLeaderboardStore'
 import { usePlayerStore } from '@/stores/usePlayerStore'
 import { TIERS } from '@/domain/config/tiers'
 import OverlayShell from '@/ui/components/OverlayShell.vue'
+import IconTrendingUp from '~icons/tabler/trending-up'
 
 const leaderboard = useLeaderboardStore()
 const player = usePlayerStore()
@@ -35,7 +36,7 @@ onMounted(() => {
           <b>{{ entry.username }}</b>
           <small>{{ tierName(entry.tier) }} · {{ entry.wins }}W {{ entry.losses }}L</small>
         </div>
-        <span class="lb__rating">▲ {{ entry.rating }}</span>
+        <span class="lb__rating"><IconTrendingUp class="lb__rating-icon" /> {{ entry.rating }}</span>
       </li>
     </ol>
   </OverlayShell>
@@ -99,8 +100,16 @@ onMounted(() => {
 }
 
 .lb__rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   font-weight: 700;
   font-size: 0.85rem;
   color: var(--color-accent);
+}
+
+.lb__rating-icon {
+  width: 0.9rem;
+  height: 0.9rem;
 }
 </style>

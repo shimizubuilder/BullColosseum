@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { usePlayerStore } from '@/stores/usePlayerStore'
 import { vaultConversion } from '@/domain/economy'
 import OverlayShell from '@/ui/components/OverlayShell.vue'
+import CurrencyAmount from '@/ui/components/CurrencyAmount.vue'
 
 const player = usePlayerStore()
 
@@ -19,8 +20,8 @@ const canConvert = computed(() => conversion.value.mintedTokens > 0)
   <OverlayShell title="Gold Vault" subtitle="Convert Gold to $CHARGE · 5% burned">
     <div class="vault">
       <div class="vault__balance">
-        <span class="pill">◈ {{ gold }}</span>
-        <span class="pill pill--token">◆ {{ token }}</span>
+        <span class="pill"><CurrencyAmount kind="gold" :amount="gold" /></span>
+        <span class="pill"><CurrencyAmount kind="token" :amount="token" /></span>
       </div>
 
       <div class="vault__presets">
@@ -39,8 +40,8 @@ const canConvert = computed(() => conversion.value.mintedTokens > 0)
       <input v-model.number="fraction" class="slider" type="range" min="0.05" max="1" step="0.05" />
 
       <div class="vault__result">
-        <span>Convert <b>{{ conversion.spentGold }} ◈</b></span>
-        <span>Receive <b class="accent">{{ conversion.mintedTokens }} ◆</b></span>
+        <span>Convert <b><CurrencyAmount kind="gold" :amount="conversion.spentGold" /></b></span>
+        <span>Receive <b><CurrencyAmount kind="token" :amount="conversion.mintedTokens" /></b></span>
       </div>
 
       <button class="convert" type="button" :disabled="!canConvert" @click="player.convertVault(fraction)">
@@ -63,16 +64,13 @@ const canConvert = computed(() => conversion.value.mintedTokens > 0)
 }
 
 .pill {
+  display: inline-flex;
+  align-items: center;
   padding: 0.35rem 0.7rem;
   border: 1px solid var(--color-border);
   border-radius: 999px;
   font-weight: 700;
   font-size: 0.85rem;
-  color: #ffcf4a;
-}
-
-.pill--token {
-  color: var(--color-accent);
 }
 
 .vault__presets {
@@ -95,6 +93,18 @@ const canConvert = computed(() => conversion.value.mintedTokens > 0)
   color: var(--color-text);
 }
 
+@media (hover: hover) {
+  .preset:hover {
+    border-color: var(--color-accent);
+    color: var(--color-text);
+  }
+}
+
+.preset:active {
+  border-color: var(--color-accent);
+  color: var(--color-text);
+}
+
 .slider {
   width: 100%;
   accent-color: var(--color-accent);
@@ -107,10 +117,6 @@ const canConvert = computed(() => conversion.value.mintedTokens > 0)
   color: var(--color-text-muted);
 }
 
-.accent {
-  color: var(--color-accent);
-}
-
 .convert {
   height: 46px;
   border: none;
@@ -120,6 +126,16 @@ const canConvert = computed(() => conversion.value.mintedTokens > 0)
   font-weight: 700;
   letter-spacing: 0.04em;
   cursor: pointer;
+}
+
+@media (hover: hover) {
+  .convert:hover:not(:disabled) {
+    filter: brightness(1.08);
+  }
+}
+
+.convert:active:not(:disabled) {
+  filter: brightness(0.94);
 }
 
 .convert:disabled {

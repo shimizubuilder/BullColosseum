@@ -59,7 +59,7 @@ export const useSpectateStore = defineStore('spectate', () => {
     side.value = betSide
     placed.value = true
     const target = betSide === 'a' ? pair.value[0] : pair.value[1]
-    message.value = `Bet ${amount} ◈ on ${target.username}`
+    message.value = `Bet ${amount} gold on ${target.username}`
     useQuestStore().progress('bet', 1)
   }
 
@@ -72,9 +72,9 @@ export const useSpectateStore = defineStore('spectate', () => {
       const player = usePlayerStore()
       player.grantReward(payout, 0)
       void player.save()
-      message.value = `Won +${payout} ◈ 🎉`
+      message.value = `Won +${payout} gold`
     } else {
-      message.value = `Lost bet -${stake.value} ◈`
+      message.value = `Lost bet -${stake.value} gold`
     }
     placed.value = false
     side.value = null

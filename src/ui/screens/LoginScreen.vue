@@ -5,6 +5,7 @@ import { AVATARS, AVATAR_IDS, type AvatarId } from '@/domain/config/avatars'
 import { usePlayerStore } from '@/stores/usePlayerStore'
 import { useSessionStore } from '@/stores/useSessionStore'
 import { useSceneStore } from '@/stores/useSceneStore'
+import IconLaurels from '~icons/game-icons/laurels'
 
 const player = usePlayerStore()
 const session = useSessionStore()
@@ -41,7 +42,11 @@ async function enter(): Promise<void> {
 
     <div class="panel">
       <header class="brand">
-        <h1>CHARGE ARENA</h1>
+        <div class="brand__row">
+          <IconLaurels class="brand__laurel" />
+          <h1>CHARGE ARENA</h1>
+          <IconLaurels class="brand__laurel brand__laurel--mirrored" />
+        </div>
         <p>No Retreat. Only Charge.</p>
       </header>
 
@@ -103,9 +108,11 @@ async function enter(): Promise<void> {
 .login {
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 1.5rem;
+  display: flex;
+  align-items: safe center;
+  justify-content: center;
+  padding: calc(1.5rem + env(safe-area-inset-top)) calc(1.5rem + env(safe-area-inset-right))
+    calc(1.5rem + env(safe-area-inset-bottom)) calc(1.5rem + env(safe-area-inset-left));
   pointer-events: auto;
   background:
     radial-gradient(120% 80% at 50% -10%, rgba(229, 72, 77, 0.14), transparent 60%),
@@ -115,8 +122,8 @@ async function enter(): Promise<void> {
 
 .status {
   position: absolute;
-  top: 1rem;
-  right: 1.25rem;
+  top: calc(1rem + env(safe-area-inset-top));
+  right: calc(1.25rem + env(safe-area-inset-right));
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -129,7 +136,7 @@ async function enter(): Promise<void> {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ff5a5a;
+  background: var(--color-live);
   box-shadow: 0 0 8px currentColor;
 }
 
@@ -138,10 +145,12 @@ async function enter(): Promise<void> {
 }
 
 .panel {
+  position: relative;
   width: min(420px, 100%);
   padding: 2rem 1.75rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-bronze);
   border-radius: 16px;
+  overflow: hidden;
   background: linear-gradient(180deg, rgba(27, 33, 41, 0.9), rgba(15, 18, 22, 0.92));
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
   display: flex;
@@ -149,15 +158,45 @@ async function enter(): Promise<void> {
   gap: 1.15rem;
 }
 
+.panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-gold-soft), transparent);
+}
+
 .brand {
   text-align: center;
   margin-bottom: 0.25rem;
 }
 
+.brand__row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.brand__laurel {
+  width: 1.6rem;
+  height: 1.6rem;
+  flex: none;
+  color: var(--color-gold-soft);
+}
+
+.brand__laurel--mirrored {
+  transform: scaleX(-1);
+}
+
 .brand h1 {
   margin: 0;
-  font-size: 1.9rem;
-  letter-spacing: 0.16em;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.8rem;
+  letter-spacing: 0.14em;
   color: var(--color-accent);
   text-shadow: 0 0 18px rgba(229, 72, 77, 0.35);
 }
@@ -190,7 +229,7 @@ async function enter(): Promise<void> {
   border-radius: 10px;
   background: rgba(10, 13, 17, 0.7);
   color: var(--color-text);
-  font-size: 0.95rem;
+  font-size: 16px;
   outline: none;
   transition: border-color 0.15s ease;
 }
@@ -246,7 +285,7 @@ async function enter(): Promise<void> {
 
 .avatars {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(52px, 1fr));
   gap: 0.5rem;
 }
 
@@ -294,8 +333,14 @@ async function enter(): Promise<void> {
   transition: filter 0.15s ease;
 }
 
-.enter:hover {
-  filter: brightness(1.08);
+@media (hover: hover) {
+  .enter:hover {
+    filter: brightness(1.08);
+  }
+}
+
+.enter:active {
+  filter: brightness(0.94);
 }
 
 .enter:disabled {

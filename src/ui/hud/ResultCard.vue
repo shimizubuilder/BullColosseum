@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useDuelStore } from '@/stores/useDuelStore'
+import CurrencyAmount from '@/ui/components/CurrencyAmount.vue'
 
 const duel = useDuelStore()
 
@@ -17,9 +18,11 @@ function signed(value: number): string {
       <p class="result__vs">vs {{ duel.result.opponentName }}</p>
       <ul class="result__rewards">
         <li><span>Rating</span><b>{{ signed(duel.result.ratingDelta) }}</b></li>
-        <li><span>Gold</span><b>{{ signed(duel.result.reward.gold) }} ◈</b></li>
+        <li><span>Gold</span><b><CurrencyAmount kind="gold" :amount="signed(duel.result.reward.gold)" /></b></li>
         <li><span>XP</span><b>+{{ duel.result.reward.xp }}</b></li>
-        <li v-if="duel.result.reward.token"><span>Token</span><b>+{{ duel.result.reward.token }} ◆</b></li>
+        <li v-if="duel.result.reward.token">
+          <span>Token</span><b><CurrencyAmount kind="token" :amount="`+${duel.result.reward.token}`" /></b>
+        </li>
       </ul>
       <button class="result__continue" type="button" @click="duel.clearResult()">Continue</button>
     </div>
@@ -38,22 +41,36 @@ function signed(value: number): string {
 }
 
 .result__card {
+  position: relative;
   width: min(360px, 92vw);
   padding: 1.6rem 1.4rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-bronze);
   border-radius: 16px;
+  overflow: hidden;
   background: linear-gradient(180deg, rgba(27, 33, 41, 0.98), rgba(15, 18, 22, 0.98));
   text-align: center;
 }
 
+.result__card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-gold-soft), transparent);
+}
+
 .result__title {
   margin: 0;
+  font-family: var(--font-display);
+  font-weight: 900;
   font-size: 2rem;
   letter-spacing: 0.1em;
 }
 
 .result__title.is-win {
-  color: #ffcf4a;
+  color: var(--color-gold);
 }
 
 .result__title.is-loss {

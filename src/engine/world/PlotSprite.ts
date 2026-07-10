@@ -1,4 +1,4 @@
-import { Container, Graphics, Text } from 'pixi.js'
+import { Container, Graphics } from 'pixi.js'
 import type { PlotDef } from '@/domain/maps/mapTypes'
 import { ISO, worldToIso, type Point } from '@/engine/iso/isoMath'
 import { createLabelPlate } from './labelPlate'
@@ -48,14 +48,7 @@ export function createPlotSprite(plot: PlotDef, ownership: PlotOwnership | null)
   }
   container.addChild(graphics)
 
-  if (!owned) {
-    const cow = new Text({ text: '🐄', style: { fontSize: 26 } })
-    cow.anchor.set(0.5)
-    cow.position.set(0, -6)
-    container.addChild(cow)
-  }
-
-  const labelText = owned ? (ownership?.label ?? '') : 'FOR SALE · 150 ◈'
+  const labelText = owned ? (ownership?.label ?? '') : 'FOR SALE · 150 GOLD'
   const label = createLabelPlate(labelText)
   label.position.set(0, relative(plot.x, plot.y + halfDepth).y + 6)
   container.addChild(label)

@@ -6,6 +6,9 @@ import { useKingStore } from '@/stores/useKingStore'
 import { useDuelStore } from '@/stores/useDuelStore'
 import { TIERS } from '@/domain/config/tiers'
 import OverlayShell from '@/ui/components/OverlayShell.vue'
+import CurrencyAmount from '@/ui/components/CurrencyAmount.vue'
+import IconLaurelCrown from '~icons/game-icons/laurel-crown'
+import IconCrossedSwords from '~icons/game-icons/crossed-swords'
 
 const player = usePlayerStore()
 const scene = useSceneStore()
@@ -39,13 +42,13 @@ onMounted(() => {
   <OverlayShell title="King of the Arena" subtitle="One throne. One ruler.">
     <div class="king">
       <div v-if="king.state" class="king__card" :class="{ 'king__card--mine': king.isMine }">
-        <div class="king__crown">👑</div>
+        <IconLaurelCrown class="king__crown" />
         <div class="king__name">{{ king.state.username }}</div>
         <div class="king__meta">Tier {{ tierName }} · held for {{ holdText() }}</div>
-        <div class="king__bounty">Bounty accrued: <b>{{ king.bounty }}</b> ◈</div>
+        <div class="king__bounty">Bounty accrued: <CurrencyAmount kind="gold" :amount="king.bounty" /></div>
       </div>
       <div v-else class="king__card">
-        <div class="king__crown">👑</div>
+        <IconLaurelCrown class="king__crown" />
         <div class="king__meta">No King yet. Become the first ruler of the Colosseum!</div>
       </div>
 
@@ -55,7 +58,9 @@ onMounted(() => {
       </p>
 
       <button class="king__challenge" type="button" :disabled="king.isMine" @click="challenge">
-        {{ king.isMine ? '👑 You are holding the throne' : king.state ? '⚔ Challenge King' : '👑 Become King' }}
+        <template v-if="king.isMine"><IconLaurelCrown class="king__btn-icon" /> You are holding the throne</template>
+        <template v-else-if="king.state"><IconCrossedSwords class="king__btn-icon" /> Challenge King</template>
+        <template v-else><IconLaurelCrown class="king__btn-icon" /> Become King</template>
       </button>
     </div>
   </OverlayShell>
@@ -84,13 +89,15 @@ onMounted(() => {
 }
 
 .king__crown {
-  font-size: 2.4rem;
+  width: 2.6rem;
+  height: 2.6rem;
+  color: var(--color-gold);
 }
 
 .king__name {
   font-size: 1.2rem;
   font-weight: 800;
-  color: #ffcf4a;
+  color: var(--color-gold);
 }
 
 .king__meta {
@@ -100,15 +107,14 @@ onMounted(() => {
 }
 
 .king__bounty {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   margin-top: 0.25rem;
   padding: 0.3rem 0.7rem;
   border-radius: 999px;
   background: rgba(10, 13, 17, 0.7);
   font-size: 0.8rem;
-}
-
-.king__bounty b {
-  color: #ffcf4a;
 }
 
 .king__hint {
@@ -119,14 +125,33 @@ onMounted(() => {
 }
 
 .king__challenge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   height: 46px;
   border: 1px solid rgba(255, 207, 74, 0.5);
   border-radius: 11px;
   background: rgba(255, 207, 74, 0.14);
-  color: #ffcf4a;
+  color: var(--color-gold);
   font-weight: 800;
   letter-spacing: 0.03em;
   cursor: pointer;
+}
+
+.king__btn-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+@media (hover: hover) {
+  .king__challenge:hover:not(:disabled) {
+    background: rgba(255, 207, 74, 0.24);
+  }
+}
+
+.king__challenge:active:not(:disabled) {
+  background: rgba(255, 207, 74, 0.24);
 }
 
 .king__challenge:disabled {

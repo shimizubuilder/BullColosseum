@@ -5,6 +5,7 @@ import { ELEMENTS } from '@/domain/config/elements'
 import { TIERS } from '@/domain/config/tiers'
 import { trainingCost } from '@/domain/economy'
 import OverlayShell from '@/ui/components/OverlayShell.vue'
+import CurrencyAmount from '@/ui/components/CurrencyAmount.vue'
 
 const player = usePlayerStore()
 
@@ -50,7 +51,7 @@ function barWidth(value: number): string {
       </ul>
 
       <button class="train" type="button" :disabled="!canTrain" @click="player.trainBull()">
-        Train · {{ cost }} ◈
+        Train · <CurrencyAmount kind="gold" :amount="cost" />
       </button>
     </div>
   </OverlayShell>
@@ -135,6 +136,10 @@ function barWidth(value: number): string {
 }
 
 .train {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
   height: 46px;
   border: none;
   border-radius: 11px;
@@ -143,6 +148,16 @@ function barWidth(value: number): string {
   font-weight: 700;
   letter-spacing: 0.04em;
   cursor: pointer;
+}
+
+@media (hover: hover) {
+  .train:hover:not(:disabled) {
+    filter: brightness(1.08);
+  }
+}
+
+.train:active:not(:disabled) {
+  filter: brightness(0.94);
 }
 
 .train:disabled {
